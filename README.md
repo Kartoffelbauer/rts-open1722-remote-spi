@@ -26,7 +26,7 @@ graph TD
 
 (Identify payload/header (and open1722's specifications/methods/whatever it can do for us) for the package of our SPI transaction)
 
-## Hardwarelist
+## Required Hardware
 
 - 4x Nucleo Board (we got 2 already)
 - 2x SSD1306 SPI OLED Display (Waveshare, Adafruit)
