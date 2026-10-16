@@ -1,13 +1,19 @@
-## Overview of the System
-Remote Device [SPI MASTER]
+# RTS Open1722 REmote SPI
 
---SPI Instructions over Internet-->
+## System Overview
 
-Nucleo board (receive -> validate -> foward display) [SPI SLAVE]
+```mermaid
+graph TD
+    %% Nodes
+    A[Remote Device<br/><b>SPI MASTER</b>]
+    B[Nucleo Board<br/><b>SPI SLAVE</b>]
+    C[OLED Display]
 
---local SPI-->
-
-OLED
+    %% Connections
+    A -->|SPI Instructions<br/>over Internet| B
+    B -->|Receive → Validate → Forward| B
+    B -->|Local SPI| C
+```
 
 ## First Project Plan
 
