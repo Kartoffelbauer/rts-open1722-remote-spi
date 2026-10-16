@@ -1,4 +1,4 @@
-# RTS Open1722 REmote SPI
+# RTS Open1722 Remote SPI
 
 ## System Overview
 
