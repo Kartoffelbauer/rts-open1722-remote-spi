@@ -42,6 +42,8 @@ flowchart LR
 | 7 | **Milestone 2:** Board A reads temperature, shows it on the remote OLED, button switches the page |
 | 8 | **Finalisation:** Docs, demo, cleanup |
 
+**Dependencies:** Tasks 2 and 3 only need the setup (1) and can be done in parallel. Task 4 needs the network (3), task 5 needs both the local SPI test (2) and the GBB message (4). Everything after that builds on the previous step.
+
 ## Required Hardware
  
 | Item | Amount |
