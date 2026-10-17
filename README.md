@@ -46,9 +46,9 @@ flowchart LR
  
 | Item | Amount |
 |---|---|
-| NUCLEO-F439ZI | 2 |
-| SSD1306 OLED, SPI version | 1 |
-| BME280 breakout, SPI-capable | 1 |
+| NUCLEO-F439ZI | 2 (already owned)|
+| SSD1306 SPI OLED Display (e.g. Waveshare, Adafruit) | 1 |
+| BME280, SPI-capable, or other SPI sensor for testing purposes | 1 |
 | Breadboard | 1 |
 | Ethernet cable | 1 |
 | USB cables for the Boards (power, flashing, serial) | 2 |
