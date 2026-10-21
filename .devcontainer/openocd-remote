@@ -1,0 +1,152 @@
+#!/usr/bin/env python3
+"""
+Ersatz für 'openocd' im Devcontainer.
+
+Docker Desktop (macOS/Windows) kann keine USB-Geräte in den Container
+durchreichen. Deshalb läuft OpenOCD auf dem Host (dort hängt das Board) und
+dieses Skript übersetzt die Aufrufe von 'west flash' / 'west debug' in eine
+GDB-Verbindung zu diesem OpenOCD. Die Firmware wird über die GDB-Verbindung
+übertragen, der Host braucht also keinen Zugriff auf die Build-Dateien.
+
+Host-Seite (einmal starten, Board per USB anschließen):
+    openocd -f board/st_nucleo_f4.cfg
+"""
+
+import glob
+import os
+import re
+import socket
+import subprocess
+import sys
+import tempfile
+import threading
+
+HOST = os.environ.get("OPENOCD_REMOTE_HOST", "host.docker.internal")
+GDB_PORT = int(os.environ.get("OPENOCD_REMOTE_GDB_PORT", "3333"))
+
+HOST_HINT = f"""
+Kein OpenOCD auf dem Host erreichbar ({HOST}:{GDB_PORT}).
+Board per USB am Rechner anschließen und auf dem Host (nicht im Container) starten:
+
+    openocd -f board/st_nucleo_f4.cfg
+"""
+
+
+def die(msg):
+    print(f"openocd-remote: {msg}", file=sys.stderr)
+    sys.exit(1)
+
+
+def parse_args(argv):
+    """Liefert die -c Kommandos nach 'init' und den gewünschten GDB-Port."""
+    cmds, gdb_port, after_init = [], GDB_PORT, False
+    it = iter(argv)
+    for arg in it:
+        if arg in ("-s", "-f", "-d", "-l", "--search", "--file", "--log_output"):
+            next(it, None)
+        elif arg in ("-c", "--command") or arg.startswith("-c"):
+            # Der Runner übergibt teils '-c init' als ein einziges Argument
+            cmd = (next(it, "") if arg in ("-c", "--command") else arg[2:]).strip()
+            m = re.fullmatch(r"gdb_port\s+(\d+)", cmd)
+            if m:
+                gdb_port = int(m.group(1))
+            elif cmd == "init":
+                after_init = True
+            elif after_init and cmd != "targets":
+                cmds.append(cmd)
+    return cmds, gdb_port
+
+
+def check_host():
+    try:
+        socket.create_connection((HOST, GDB_PORT), timeout=3).close()
+    except OSError:
+        die(HOST_HINT)
+
+
+def find_gdb():
+    gdbs = sorted(glob.glob("/workdir/zephyr-sdk-*/gnu/arm-zephyr-eabi/bin/arm-zephyr-eabi-gdb"))
+    if not gdbs:
+        die("arm-zephyr-eabi-gdb im Zephyr SDK nicht gefunden")
+    return gdbs[-1]
+
+
+def elf_for(image):
+    """GDB lädt am zuverlässigsten die ELF-Datei neben .hex/.bin."""
+    elf = os.path.splitext(image)[0] + ".elf"
+    return elf if os.path.exists(elf) else image
+
+
+def flash(cmds):
+    gdb_cmds = ["set confirm off", "set pagination off",
+                f"target remote {HOST}:{GDB_PORT}"]
+    for cmd in cmds:
+        load = re.fullmatch(r"(?:flash write_image(?: erase)?|load_image)\s+(\S+).*", cmd)
+        verify = re.fullmatch(r"verify_image\s+(\S+).*", cmd)
+        if cmd == "shutdown":
+            break
+        elif load:
+            gdb_cmds += [f"file {elf_for(load.group(1))}", "load"]
+        elif verify:
+            gdb_cmds += [f"file {elf_for(verify.group(1))}", "compare-sections"]
+        else:
+            gdb_cmds.append(f"monitor {cmd}")
+    gdb_cmds.append("disconnect")
+
+    # Als Skript statt -ex: bricht beim ersten Fehler ab und liefert Exit-Code != 0
+    with tempfile.NamedTemporaryFile("w", suffix=".gdb") as script:
+        script.write("\n".join(gdb_cmds) + "\n")
+        script.flush()
+        result = subprocess.run([find_gdb(), "-q", "-batch", "-nx", "-x", script.name])
+    if result.returncode != 0:
+        die("Flashen fehlgeschlagen")
+
+
+def pipe(src, dst):
+    try:
+        while data := src.recv(65536):
+            dst.sendall(data)
+    except OSError:
+        pass
+    finally:
+        for s in (src, dst):
+            try:
+                s.shutdown(socket.SHUT_RDWR)
+            except OSError:
+                pass
+
+
+def serve(local_port):
+    """'west debug'/'debugserver': lokalen GDB-Port zum Host-OpenOCD weiterleiten."""
+    srv = socket.create_server(("127.0.0.1", local_port))
+    print(f"openocd-remote: localhost:{local_port} -> {HOST}:{GDB_PORT}", file=sys.stderr)
+    while True:
+        client, _ = srv.accept()
+        try:
+            upstream = socket.create_connection((HOST, GDB_PORT), timeout=5)
+            upstream.settimeout(None)
+        except OSError:
+            client.close()
+            print(HOST_HINT, file=sys.stderr)
+            continue
+        threading.Thread(target=pipe, args=(client, upstream), daemon=True).start()
+        threading.Thread(target=pipe, args=(upstream, client), daemon=True).start()
+
+
+def main():
+    argv = sys.argv[1:]
+    if "--version" in argv or "-v" in argv:
+        # Der Zephyr-Runner liest die Version, um Thread-Awareness zu prüfen
+        print("Open On-Chip Debugger 0.12.0 (openocd-remote wrapper)")
+        return
+
+    cmds, gdb_port = parse_args(argv)
+    check_host()
+    if "shutdown" in cmds:
+        flash(cmds)
+    else:
+        serve(gdb_port)
+
+
+if __name__ == "__main__":
+    main()

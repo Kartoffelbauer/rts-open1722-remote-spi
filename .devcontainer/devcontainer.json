@@ -1,0 +1,57 @@
+{
+  "name": "Zephyr",
+  "build": { "dockerfile": "Dockerfile" },
+  "remoteUser": "vscode",
+
+  // Zephyr-Workspace, venv, SDK und ccache liegen in einem Docker-Volume:
+  // übersteht Container-Rebuilds und ist auf macOS viel schneller als ein Bind-Mount.
+  "mounts": [
+    "source=zephyr-workdir,target=/workdir,type=volume"
+  ],
+
+  "containerEnv": {
+    // Zephyr-Version (Tag/Branch), z. B. "v4.4.0", "main" oder "v3.7.0" (LTS)
+    "ZEPHYR_REVISION": "v4.4.0",
+    // Nur diese Toolchains installieren (spart viel Platz). Leer lassen = alle.
+    // Mehrere mit Leerzeichen, z. B. "arm-zephyr-eabi riscv64-zephyr-elf"
+    "SDK_TOOLCHAINS": "arm-zephyr-eabi",
+
+    "ZEPHYR_BASE": "/workdir/zephyr",
+    "VIRTUAL_ENV": "/workdir/.venv",
+    "CCACHE_DIR": "/workdir/.ccache",
+
+    "OPENOCD_REMOTE_HOST": "172.19.x.x" // ip route show default in WSL
+  },
+  "remoteEnv": {
+    "PATH": "/workdir/.venv/bin:${containerEnv:PATH}"
+  },
+
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+
+  "hostRequirements": {
+    "cpus": 4,
+    // Docker Desktop meldet etwas weniger als eingestellt (8 GB -> ~7,65 GB)
+    "memory": "6gb"
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.cpptools",
+        "ms-vscode.cpptools-extension-pack",
+        "ms-python.python",
+        "marus25.cortex-debug",
+        "trond-snekvik.devicetree",
+        "trond-snekvik.kconfig-lang"
+      ],
+      "settings": {
+        "C_Cpp.default.compileCommands": "${workspaceFolder}/build/compile_commands.json",
+        // Gebaut wird mit west, nicht über CMake Tools
+        "cmake.configureOnOpen": false,
+        "cmake.automaticReconfigure": false,
+        "python.defaultInterpreterPath": "/workdir/.venv/bin/python",
+        "python.terminal.activateEnvironment": false 
+      }
+    }
+  }
+}
