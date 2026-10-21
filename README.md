@@ -1,12 +1,10 @@
 # RTS Open1722 Remote SPI
 
-## Goal
+Control an SPI OLED display and a BME280 sensor remotely using IEEE 1722 Generic Byte Bus (GBB) messages. One Nucleo board sends SPI transactions over Ethernet, a second Nucleo receives them and executes them on its own SPI pins.
 
-Control an SPI OLED (and a BME280 sensor) remotely with IEEE 1722 Generic Byte Bus (GBB) messages. One Nucleo sends SPI transactions over Ethernet, a second Nucleo receives them and executes them on its SPI pins.
+**Demo:** pressing a button on the sending board reads the temperature from the remote BME280 and shows it on the remote OLED.
 
-**Demo:** a button press on the sending board reads the temperature remotely and shows it on the remote OLED.
-
-## System Overview
+## Overview
 
 ```mermaid
 flowchart LR
@@ -14,47 +12,49 @@ flowchart LR
     B["B: <b>NUCLEO-F439ZI</b><br/><i>Responder / SPI master</i><br/>GBB request → SPI transfer"]
     O["SSD1306 OLED<br/><i>SPI slave</i>"]
     S["BME280<br/><i>SPI slave</i>"]
- 
+
     A -- "GBB over UDP<br/>Ethernet cable" --> B
     B -. "GBB response" .-> A
     B -- "SPI wires" --> O
     B -- "SPI wires" --> S
 ```
- 
-- **Network link:** A <-> B (Ethernet cable, static IPs, 1722 over UDP, Annex J)
-- **SPI link:** B <-> OLED/BME280 (plain wires on the pins, no network)
 
-## Notes
-- Zephyr RTOS on both boards, Open1722 for GBB
-- `byte_bus_id` selects the SPI device
-- BME280 first as the simple test of the remote link, then the OLED
+- **Network link:** Board A ↔ Board B over Ethernet (static IPs, IEEE 1722 over UDP, Annex J)
+- **SPI link:** Board B ↔ OLED / BME280 over plain wires (no network)
 
-## Project Plan
- 
-| # | Task |
+See [Architecture](docs/architecture.md) for details.
+
+## Tech Stack
+
+- [Zephyr RTOS](https://zephyrproject.org/) on both boards
+- [Open1722](https://github.com/COVESA/Open1722) for GBB message handling
+- 2× NUCLEO-F439ZI, SSD1306 SPI OLED, BME280
+
+## Quick Start
+
+Full instructions: [Getting Started](docs/getting-started.md).
+
+### 1. On Windows (PowerShell): start OpenOCD and leave it running
+```bash
+openocd -f board/st_nucleo_f4.cfg -c "bindto 0.0.0.0" -c "reset_config srst_only srst_nogate connect_assert_srst"
+```
+
+### 2. In the dev container, from /workspaces/RTS: build and flash
+```bash
+west build -p always -b nucleo_f439zi app -d build
+west flash
+```
+
+## Documentation
+
+| Document | Description |
 |---|---|
-| 1 | **Setup:** Set up repo, Zephyr on both boards, read GBB spec (§9.4.14, Annex O, Annex J) |
-| 2 | **Local test on Board B:** read BME280, then show text on the OLED, all without network |
-| 3 | **Network test:** Ethernet + static IPs, UDP echo A <-> B |
-| 4 | **GBB message:** Board A sends a GBB write request, Board B parses it and logs the bytes |
-| 5 | **Responder:** map `byte_bus_id` -> SPI device, run the SPI transfer, send GBB response |
-| 6 | **Milestone 1:** Board A reads the BME280 chip ID remotely |
-| 7 | **Milestone 2:** Board A reads temperature, shows it on the remote OLED, button switches the page |
-| 8 | **Finalisation:** Docs, demo, cleanup |
+| [Getting Started](docs/getting-started.md) | From plugging in the board to flashing the app |
+| [Architecture](docs/architecture.md) | System design, links and demo flow |
+| [Hardware](docs/hardware.md) | Required hardware list |
+| [Project Plan](docs/project-plan.md) | Tasks, dependencies and milestones |
+| [Troubleshooting](docs/troubleshooting.md) | Toolchain checks and common errors |
 
-**Dependencies:** Tasks 2 and 3 only need the setup (1) and can be done in parallel. Task 4 needs the network (3), task 5 needs both the local SPI test (2) and the GBB message (4). Everything after that builds on the previous step.
+## Project Status
 
-## Required Hardware
- 
-| Item | Amount |
-|---|---|
-| NUCLEO-F439ZI | 2 (already owned)|
-| SSD1306 SPI OLED Display (e.g. Waveshare, Adafruit) | 1 |
-| BME280, SPI-capable, or other SPI sensor for testing purposes | 1 |
-| Breadboard | 1 |
-| Ethernet cable | 1 |
-| USB cables for the Boards (power, flashing, serial) | 2 |
-| Jumper wires (F-M, F-F, M-M) | a bunch |
-| Optional: USB-C to Ethernet adapter | 1 |
- 
-(Double the amount would be nice for sub-group testing)
+See the [Project Plan](docs/project-plan.md).
