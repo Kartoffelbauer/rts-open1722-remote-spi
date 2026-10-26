@@ -37,25 +37,35 @@ git submodule update --init
 
 Run this from `/workspaces/RTS`:
 
+Each board gets its own role, and each role has its own build directory:
+
+Requester
 ```bash
-west build -p always -b nucleo_f439zi app -d build
+west build -p always -b nucleo_f439zi app -d build/requester -- -DROLE=requester
 ```
 
-`-p always` does a clean rebuild, which also replaces the earlier blinky build in `build/`. The build should end with a memory usage table and no errors.
+Responder
+```bash
+west build -p always -b nucleo_f439zi app -d build/responder -- -DROLE=responder
+```
+
+`-p always` does a clean rebuild. Each build should end with a memory usage table and no errors. If you leave out `-DROLE`, the build stops and tells you to set it.
 
 ## 5. Flash it
 
-If `OPENOCD_REMOTE_HOST` is already in your `containerEnv` and you rebuilt the container, just run:
+Plug in the board you want to flash, so that OpenOCD sees it, then flash the matching build:
 
+Requester
 ```bash
-west flash
+west flash -d build/requester
 ```
 
-Otherwise, set the variable inline:
-
+Responder
 ```bash
-OPENOCD_REMOTE_HOST=<IP> west flash
+west flash -d build/responder
 ```
+
+If `OPENOCD_REMOTE_HOST` isn't in your `containerEnv`, set it inline: `OPENOCD_REMOTE_HOST=<IP> west flash -d build/requester`.
 
 ## Next steps
 

@@ -93,7 +93,21 @@ app/
 lib/open1722/     git submodule, pinned commit
 ```
 
-The role is chosen at build time with `-DEXTRA_CONF_FILE=<role>.conf -DEXTRA_DTC_OVERLAY_FILE=<role overlay>`. A Kconfig choice set by the `.conf` decides which role folder `CMakeLists.txt` compiles.
+The role is chosen at build time with `-DROLE=requester` or `-DROLE=responder`. From that, `app/CMakeLists.txt` adds `<role>.conf` and `boards/<board>_<role>.overlay`, and compiles `src/common/` plus `src/<role>/`. Open1722 is used header-only: its functions are `static inline`, so the build only adds `lib/open1722/include`.
+
+## Wiring (Responder)
+
+| Signal | MCU pin | Nucleo header | Peripheral pin |
+|---|---|---|---|
+| SPI1 SCK | PA5 | D13 | BME280 SCL/SCK, OLED CLK/D0 |
+| SPI1 MISO | PA6 | D12 | BME280 SDO (the OLED has no MISO) |
+| SPI1 MOSI | **PB5** | D22 (ZIO) | BME280 SDA/SDI, OLED DIN/D1 |
+| CS BME280 | PD14 | D10 | BME280 CSB |
+| CS OLED | PD15 | D9 | OLED CS |
+| OLED D/C | PF12 | D8 | OLED DC |
+| OLED RES | PF13 | D7 | OLED RES |
+
+MOSI is on PB5 instead of the board's default PA7, because PA7 carries the Ethernet RMII CRS_DV signal. Check the header position of PB5 against the NUCLEO-144 user manual (UM1974) before wiring.
 
 ## Demo flow
 

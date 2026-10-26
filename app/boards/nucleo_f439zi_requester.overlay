@@ -1,0 +1,7 @@
+/ {
+	aliases {
+		link-ok-led = &green_led_1;	/* LD1: toggles on each successful GBB Response */
+		link-err-led = &red_led_1;	/* LD3: on after a Failed Transaction */
+		page-button = &user_button;	/* B1: next Display Page */
+	};
+};
