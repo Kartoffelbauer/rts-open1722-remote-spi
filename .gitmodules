@@ -1,0 +1,3 @@
+[submodule "lib/open1722"]
+	path = lib/open1722
+	url = https://github.com/COVESA/Open1722.git
