@@ -3,7 +3,7 @@
 | # | Task | Status |
 |---|---|---|
 | 1 | **Setup:** set up repo, Zephyr on both boards, read GBB spec (§9.4.14, Annex O, Annex J) | ✅ |
-| 1a | **Build structure:** add Open1722 as submodule, split app into `common/` + `requester/` + `responder/` with role `.conf` files and overlays, replace the old I2C overlay with SPI1 | ⬜ |
+| 1a | **Build structure:** add Open1722 as submodule, split app into `common/` + `requester/` + `responder/` with role `.conf` files and overlays, replace the old I2C overlay with SPI1 | ✅ |
 | 2 | **Local test on Board B:** read BME280, then show text on the OLED, all without network (raw SPI, OLED D/C and RES via GPIO) | ⬜ |
 | 3 | **Network test:** Ethernet + static IPs, UDP echo A ↔ B | ⬜ |
 | 4 | **GBB message:** Board A sends a GBB Write Request, Board B parses it and logs the bytes | ⬜ |
