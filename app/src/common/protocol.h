@@ -6,6 +6,9 @@
 /* IANA port for AVTP over UDP (IEEE 1722-2025 Annex J) */
 #define PROTOCOL_UDP_PORT 17220
 
+/* How long the Requester waits for a response before the transaction fails */
+#define PROTOCOL_TIMEOUT_MS 100
+
 /* Open1722 truncates received GBB payload lengths to 8 bits, see docs/open1722-notes.md */
 #define PROTOCOL_MAX_PAYLOAD 255
 
