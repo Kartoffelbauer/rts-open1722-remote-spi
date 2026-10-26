@@ -39,7 +39,10 @@
         "trond-snekvik.kconfig-lang"
       ],
       "settings": {
-        "C_Cpp.default.compileCommands": "${workspaceFolder}/build/compile_commands.json",
+        "C_Cpp.default.compileCommands": [
+          "${workspaceFolder}/build/requester/compile_commands.json",
+          "${workspaceFolder}/build/responder/compile_commands.json"
+        ],
         "cmake.configureOnOpen": false,
         "cmake.automaticReconfigure": false,
         "python.defaultInterpreterPath": "/workdir/.venv/bin/python",
