@@ -27,6 +27,12 @@ Leave the window open for the whole session.
 
 In WSL run `code .` in the RTS folder, then use **Reopen in Container** if VS Code doesn't do it for you. Open a terminal in VS Code.
 
+If you cloned without `--recurse-submodules`, fetch Open1722 once:
+
+```bash
+git submodule update --init
+```
+
 ## 4. Build the app
 
 Run this from `/workspaces/RTS`:

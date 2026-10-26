@@ -3,3 +3,6 @@
 
 # Zephyr
 build/
+
+# Licensed IEEE standard (Hochschule Heilbronn), do not redistribute
+docs/1722-2025.pdf

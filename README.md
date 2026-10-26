@@ -2,7 +2,7 @@
 
 Control an SPI OLED display and a BME280 sensor remotely using IEEE 1722 Generic Byte Bus (GBB) messages. One Nucleo board sends SPI transactions over Ethernet, a second Nucleo receives them and executes them on its own SPI pins.
 
-**Demo:** pressing a button on the sending board reads the temperature from the remote BME280 and shows it on the remote OLED.
+**Demo:** the Requester periodically reads the remote BME280 and shows the values on the remote OLED; its button cycles through the display pages.
 
 ## Overview
 
@@ -54,6 +54,9 @@ west flash
 | [Hardware](docs/hardware.md) | Required hardware list |
 | [Project Plan](docs/project-plan.md) | Tasks, dependencies and milestones |
 | [Troubleshooting](docs/troubleshooting.md) | Toolchain checks and common errors |
+| [Open1722 Notes](docs/open1722-notes.md) | GBB support, known bugs, spec field summary |
+| [Decisions](docs/adr/) | Architecture decision records |
+| [Glossary](GLOSSARY.md) | Project terminology |
 
 ## Project Status
 
