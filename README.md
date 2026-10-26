@@ -39,10 +39,24 @@ Full instructions: [Getting Started](docs/getting-started.md).
 openocd -f board/st_nucleo_f4.cfg -c "bindto 0.0.0.0" -c "reset_config srst_only srst_nogate connect_assert_srst"
 ```
 
-### 2. In the dev container, from /workspaces/RTS: build and flash
+### 2. In the dev container, from /workspaces/RTS:
+#### Get Open1722
+
 ```bash
-west build -p always -b nucleo_f439zi app -d build
-west flash
+git submodule update --init   # once, fetches Open1722
+```
+
+#### Build and Flash
+Requester
+```bash
+west build -p always -b nucleo_f439zi app -d build/requester -- -DROLE=requester
+west flash -d build/requester
+```
+
+Responder
+```bash
+west build -p always -b nucleo_f439zi app -d build/responder -- -DROLE=responder
+west flash -d build/responder
 ```
 
 ## Documentation

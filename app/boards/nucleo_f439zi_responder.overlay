@@ -1,0 +1,22 @@
+/*
+ * Peripherals are reached through raw SPI only, so no bme280/ssd1306 nodes here
+ * (see docs/adr/0001-responder-is-a-dumb-byte-bus.md).
+ */
+
+&spi1 {
+	/* PA7 is the Ethernet RMII CRS_DV pin on this board, so MOSI moves to PB5 */
+	pinctrl-0 = <&spi1_sck_pa5 &spi1_miso_pa6 &spi1_mosi_pb5>;
+	cs-gpios = <&gpiod 14 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>,	/* D10: BME280 */
+		   <&gpiod 15 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;	/* D9: OLED */
+};
+
+/ {
+	zephyr,user {
+		oled-dc-gpios = <&gpiof 12 GPIO_ACTIVE_HIGH>;	/* D8: high = data, low = command */
+		oled-res-gpios = <&gpiof 13 GPIO_ACTIVE_LOW>;	/* D7 */
+	};
+
+	aliases {
+		spi-err-led = &red_led_1;	/* LD3: on after a local SPI failure */
+	};
+};
