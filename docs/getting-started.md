@@ -51,10 +51,16 @@ In WSL run `code .` in the RTS folder, then use **Reopen in Container** if VS Co
 
 You need [Docker Engine](https://docs.docker.com/engine/install/) with your user in the `docker` group (`sudo usermod -aG docker $USER`, then log out and back in).
 
-Start the Docker daemon (use `enable --now` instead to also start it at every boot):
+Start the Docker daemon:
 
 ```bash
 sudo systemctl start docker
+```
+
+To also start it at every boot, use this instead:
+
+```bash
+sudo systemctl enable --now docker
 ```
 
 With SELinux enforcing (Fedora, RHEL; check with `getenforce`), the container can't read the mounted repo folder. Give the folder the container label once, from the repo folder:
