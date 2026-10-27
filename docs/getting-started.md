@@ -57,6 +57,14 @@ Start the Docker daemon (use `enable --now` instead to also start it at every bo
 sudo systemctl start docker
 ```
 
+With SELinux enforcing (Fedora, RHEL; check with `getenforce`), the container can't read the mounted repo folder. Give the folder the container label once, from the repo folder:
+
+```bash
+chcon -R -t container_file_t .
+```
+
+To undo it, restore the default labels with `restorecon -R -v .`. A full SELinux relabel also resets the label, so after one you need to run `chcon` again.
+
 Run `code .` in the repo folder, then use **Reopen in Container** if VS Code doesn't do it for you. Open a terminal in VS Code.
 
 ### Both

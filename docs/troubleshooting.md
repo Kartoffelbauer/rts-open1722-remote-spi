@@ -38,6 +38,10 @@ The container can't reach OpenOCD on the host.
 
 Your user can't access the ST-LINK. Install the udev rules (they come with the `openocd` package; otherwise copy `contrib/60-openocd.rules` from OpenOCD to `/etc/udev/rules.d/`), run `sudo udevadm control --reload && sudo udevadm trigger`, and replug the board.
 
+### Container on Linux: `Permission denied` on files in the workspace
+
+SELinux blocks the container from accessing the mounted repo folder. From the repo folder on the host, run `chcon -R -t container_file_t .`, then reopen the container. To undo it, run `restorecon -R -v .`.
+
 ### OpenOCD on Linux: `couldn't bind ... to socket` / `Cannot assign requested address`
 
 `docker0` doesn't exist yet, so OpenOCD can't bind to `172.17.0.1`. Start Docker first (`sudo systemctl start docker`), then OpenOCD.
