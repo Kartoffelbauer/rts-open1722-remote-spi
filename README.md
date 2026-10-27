@@ -34,12 +34,19 @@ See [Architecture](docs/architecture.md) for details.
 
 Full instructions: [Getting Started](docs/getting-started.md).
 
-### 1. On Windows (PowerShell): start OpenOCD and leave it running
-```bash
+### 1. On the host: start OpenOCD and leave it running
+
+Windows (PowerShell):
+```powershell
 openocd -f board/st_nucleo_f4.cfg -c "bindto 0.0.0.0" -c "reset_config srst_only srst_nogate connect_assert_srst"
 ```
 
-### 2. In the dev container, from /workspaces/RTS:
+Linux (with Docker running):
+```bash
+openocd -f board/st_nucleo_f4.cfg -c "bindto 172.17.0.1" -c "reset_config srst_only srst_nogate connect_assert_srst"
+```
+
+### 2. In the dev container, from the workspace folder (e.g. /workspaces/RTS):
 #### Get Open1722
 
 ```bash

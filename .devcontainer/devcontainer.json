@@ -3,6 +3,12 @@
   "build": { "dockerfile": "Dockerfile" },
   "remoteUser": "vscode",
 
+  // OpenOCD auf dem Host finden (siehe openocd-remote):
+  // Linux: host.docker.internal -> Docker-Bridge (172.17.0.1)
+  "runArgs": ["--add-host=host.docker.internal:host-gateway"],
+  // WSL: Windows-Host-IP bei jedem Start neu ermitteln
+  "initializeCommand": "if grep -qi microsoft /proc/version 2>/dev/null; then ip route show default | awk '{print $3; exit}' > .devcontainer/.openocd-host; else rm -f .devcontainer/.openocd-host; fi",
+
   "mounts": [
     "source=zephyr-workdir,target=/workdir,type=volume"
   ],
@@ -15,7 +21,7 @@
     "VIRTUAL_ENV": "/workdir/.venv",
     "CCACHE_DIR": "/workdir/.ccache",
 
-    "OPENOCD_REMOTE_HOST": "x.x.x.x" // ip route show default in WSL
+    "OPENOCD_REMOTE_HOST_FILE": "${containerWorkspaceFolder}/.devcontainer/.openocd-host"
   },
   "remoteEnv": {
     "PATH": "/workdir/.venv/bin:${containerEnv:PATH}"

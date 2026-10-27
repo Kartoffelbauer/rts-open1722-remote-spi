@@ -1,0 +1,4 @@
+# Alles in .devcontainer läuft im Linux-Container: immer LF, auch beim Checkout unter Windows
+* text=auto
+*.sh text eol=lf
+.devcontainer/** text eol=lf

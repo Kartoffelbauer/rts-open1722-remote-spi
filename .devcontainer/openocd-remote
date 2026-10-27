@@ -10,6 +10,13 @@ GDB-Verbindung zu diesem OpenOCD. Die Firmware wird über die GDB-Verbindung
 
 Host-Seite (einmal starten, Board per USB anschließen):
     openocd -f board/st_nucleo_f4.cfg
+
+Der Host wird automatisch gesucht, der erste erreichbare gewinnt:
+  1. OPENOCD_REMOTE_HOST, falls gesetzt (dann nur dieser)
+  2. IP aus OPENOCD_REMOTE_HOST_FILE (unter WSL vom initializeCommand
+     geschrieben: Windows-Host-IP aus 'ip route show default')
+  3. host.docker.internal (Docker Desktop; unter Linux per
+     --add-host=host.docker.internal:host-gateway -> 172.17.0.1)
 """
 
 import glob
@@ -21,15 +28,32 @@ import sys
 import tempfile
 import threading
 
-HOST = os.environ.get("OPENOCD_REMOTE_HOST", "host.docker.internal")
+HOST = None  # wird von check_host() gesetzt
 GDB_PORT = int(os.environ.get("OPENOCD_REMOTE_GDB_PORT", "3333"))
 
-HOST_HINT = f"""
-Kein OpenOCD auf dem Host erreichbar ({HOST}:{GDB_PORT}).
+
+def host_hint(hosts):
+    tried = ", ".join(f"{h}:{GDB_PORT}" for h in hosts)
+    return f"""
+Kein OpenOCD auf dem Host erreichbar ({tried}).
 Board per USB am Rechner anschließen und auf dem Host (nicht im Container) starten:
 
     openocd -f board/st_nucleo_f4.cfg
 """
+
+
+def candidate_hosts():
+    if os.environ.get("OPENOCD_REMOTE_HOST"):
+        return [os.environ["OPENOCD_REMOTE_HOST"]]
+    hosts = []
+    try:
+        with open(os.environ.get("OPENOCD_REMOTE_HOST_FILE", "")) as f:
+            if ip := f.read().strip():
+                hosts.append(ip)
+    except OSError:
+        pass
+    hosts.append("host.docker.internal")
+    return hosts
 
 
 def die(msg):
@@ -58,10 +82,16 @@ def parse_args(argv):
 
 
 def check_host():
-    try:
-        socket.create_connection((HOST, GDB_PORT), timeout=3).close()
-    except OSError:
-        die(HOST_HINT)
+    global HOST
+    hosts = candidate_hosts()
+    for host in hosts:
+        try:
+            socket.create_connection((host, GDB_PORT), timeout=3).close()
+            HOST = host
+            return
+        except OSError:
+            pass
+    die(host_hint(hosts))
 
 
 def find_gdb():
@@ -127,7 +157,7 @@ def serve(local_port):
             upstream.settimeout(None)
         except OSError:
             client.close()
-            print(HOST_HINT, file=sys.stderr)
+            print(host_hint([HOST]), file=sys.stderr)
             continue
         threading.Thread(target=pipe, args=(client, upstream), daemon=True).start()
         threading.Thread(target=pipe, args=(upstream, client), daemon=True).start()
