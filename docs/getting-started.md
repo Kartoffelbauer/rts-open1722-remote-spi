@@ -49,7 +49,13 @@ In WSL run `code .` in the RTS folder, then use **Reopen in Container** if VS Co
 
 ### Linux
 
-You need [Docker Engine](https://docs.docker.com/engine/install/) with your user in the `docker` group (`sudo usermod -aG docker $USER`, then log out and back in). 
+You need [Docker Engine](https://docs.docker.com/engine/install/) with your user in the `docker` group (`sudo usermod -aG docker $USER`, then log out and back in).
+
+Start the Docker daemon (use `enable --now` instead to also start it at every boot):
+
+```bash
+sudo systemctl start docker
+```
 
 Run `code .` in the repo folder, then use **Reopen in Container** if VS Code doesn't do it for you. Open a terminal in VS Code.
 

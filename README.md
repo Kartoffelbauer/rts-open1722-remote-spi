@@ -41,8 +41,9 @@ Windows (PowerShell):
 openocd -f board/st_nucleo_f4.cfg -c "bindto 0.0.0.0" -c "reset_config srst_only srst_nogate connect_assert_srst"
 ```
 
-Linux (with Docker running):
+Linux: start the Docker daemon first, so the `docker0` bridge (`172.17.0.1`) exists:
 ```bash
+sudo systemctl start docker   # or `enable --now` to start it at every boot
 openocd -f board/st_nucleo_f4.cfg -c "bindto 172.17.0.1" -c "reset_config srst_only srst_nogate connect_assert_srst"
 ```
 
