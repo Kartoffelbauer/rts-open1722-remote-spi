@@ -22,6 +22,16 @@ If this ends with a memory usage table and `build/zephyr/zephyr.elf` exists, Zep
 
 ## Common errors
 
+### While flashing: "'python3\r': No such file or directory"
+
+While flashing the board the line breaks cannot be read/compiled correctly because the container started on windows and the line breaks werent set correctly. 
+
+Run the following code in the "/" folder by using `cd /`
+
+`sudo sed -i 's/\r$//' /usr/local/bin/openocd-remote` 
+
+This should set the line breaks correctly.
+
 ### `Kein OpenOCD auf dem Host erreichbar`
 
 The container can't reach OpenOCD on the host.
