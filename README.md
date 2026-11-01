@@ -9,9 +9,9 @@ Control an SPI OLED display and a BME280 sensor remotely using IEEE 1722 Generic
 ```mermaid
 flowchart LR
     A["A: <b>NUCLEO-F439ZI</b><br/><i>Requester</i><br/>Builds GBB requests"]
-    B["B: <b>NUCLEO-F439ZI</b><br/><i>Responder / SPI master</i><br/>GBB request → SPI transfer"]
-    O["SSD1306 OLED<br/><i>SPI slave</i>"]
-    S["BME280<br/><i>SPI slave</i>"]
+    B["B: <b>NUCLEO-F439ZI</b><br/><i>Responder</i><br/>GBB request → SPI transfer"]
+    O["SSD1306 OLED<br/><i>Peripheral</i>"]
+    S["BME280<br/><i>Peripheral</i>"]
 
     A -- "GBB over UDP<br/>Ethernet cable" --> B
     B -. "GBB response" .-> A
@@ -19,8 +19,8 @@ flowchart LR
     B -- "SPI wires" --> S
 ```
 
-- **Network link:** Board A ↔ Board B over Ethernet (static IPs, IEEE 1722 over UDP, Annex J)
-- **SPI link:** Board B ↔ OLED / BME280 over plain wires (no network)
+- **Network link:** Requester ↔ Responder over Ethernet (static IPs, IEEE 1722 over UDP, Annex J)
+- **SPI link:** Responder ↔ OLED / BME280 over plain wires (no network)
 
 See [Architecture](docs/architecture.md) for details.
 
