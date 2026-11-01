@@ -5,7 +5,7 @@ Findings about [Open1722](https://github.com/COVESA/Open1722) that affect this p
 ## GBB support in Open1722
 
 - GBB lives entirely in the header [`include/avtp/acf/Gbb.h`](https://github.com/COVESA/Open1722/blob/main/include/avtp/acf/Gbb.h). It has a unit test (`unit/test-gbb.c`) but **no example app**.
-- There is **no `ACF_BYTE_BUS_BRIEF` header** (§9.4.15). The spec (Annex M, NOTE 2) says Listeners have to accept both the full and the brief format. Our Responder only parses the full format, which is fine as long as our Requester is the only Talker.
+- The abbreviated version of GBB is called **ABB** (Abreviated Byte Bus) (§9.4.15). It can be found in [`include/avtp/acf/Abb.h`](https://github.com/COVESA/Open1722/blob/main/include/avtp/acf/Abb.h). Our Responder currently only parses the full format, which is fine as long as our Requester is the only Talker.
 - Open1722 is **not a Zephyr module**. Its only Zephyr app (`examples/acf-can/zephyr`) is built from inside the Open1722 repo.
 
 ## Bug: `Avtp_Gbb_GetPayloadLength()` truncates to 8 bits
