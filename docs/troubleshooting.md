@@ -48,6 +48,10 @@ The container can't reach OpenOCD on the host.
 
 Your user can't access the ST-LINK. Install the udev rules (they come with the `openocd` package; otherwise copy `contrib/60-openocd.rules` from OpenOCD to `/etc/udev/rules.d/`), run `sudo udevadm control --reload && sudo udevadm trigger`, and replug the board.
 
+### OpenOCD on Windows: `LIBUSB_ERROR_NOT_FOUND` / `open failed`
+
+Windows has no driver for the ST-LINK's debug interface. In Device Manager, **ST-Link Debug** shows a warning icon. Install ST's ST-LINK USB driver ([STSW-LINK009](https://www.st.com/en/development-tools/stsw-link009.html)): unzip it, run `dpinst_amd64.exe`, and replug the board.
+
 ### Container on Linux: `Permission denied` on files in the workspace
 
 SELinux blocks the container from accessing the mounted repo folder. From the repo folder on the host, run `chcon -R -t container_file_t .`, then reopen the container. To undo it, run `restorecon -R -v .`.
