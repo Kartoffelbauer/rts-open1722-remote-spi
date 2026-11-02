@@ -14,11 +14,15 @@ Plug the Nucleo's ST-LINK USB port into your PC (the one on the debugger side, n
 
 ### Windows
 
+Install OpenOCD with winget (`winget install xpack-dev-tools.openocd-xpack`), then open a new PowerShell window so `openocd` is on the PATH. If OpenOCD doesn't find the ST-LINK, install ST's ST-LINK USB driver ([STSW-LINK009](https://www.st.com/en/development-tools/stsw-link009.html)) and replug the board.
+
 Open PowerShell (not WSL or the container):
 
 ```powershell
 openocd -f board/st_nucleo_f4.cfg -c "bindto 0.0.0.0" -c "reset_config srst_only srst_nogate connect_assert_srst"
 ```
+
+If Windows Firewall asks, allow OpenOCD on private networks so the container can reach it.
 
 ### Linux
 
