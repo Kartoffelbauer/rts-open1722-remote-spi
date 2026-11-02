@@ -1,0 +1,34 @@
+/*
+ * Adafruit SHARP Memory Display 1.3" 168x144 (LS013B7DH05) on SPI1
+ *
+ *   Display  ->  Nucleo-F439ZI
+ *   SCLK     ->  D13 (PA5)
+ *   MOSI     ->  D11 (PA7)
+ *   CS       ->  D10 (PD14)
+ *
+ * The panel has no MISO; PA6 (D12) stays reserved by SPI1 but is unused.
+ */
+
+/ {
+	chosen {
+		zephyr,display = &sharp_lcd;
+	};
+};
+
+&spi1 {
+	status = "okay";
+	/* The Sharp memory LCD uses an active-HIGH chip select */
+	cs-gpios = <&gpiod 14 GPIO_ACTIVE_HIGH>;
+
+	sharp_lcd: ls0xx@0 {
+		compatible = "sharp,ls0xx";
+		reg = <0>;
+		spi-max-frequency = <1000000>;
+		spi-cs-setup-delay-ns = <3000>;
+		spi-cs-hold-delay-ns = <1000>;
+		width = <144>;
+		height = <168>;
+		/* EXTCOMIN is not wired: toggle VCOM through the SPI command byte */
+		serial-vcom-inversion;
+	};
+};
