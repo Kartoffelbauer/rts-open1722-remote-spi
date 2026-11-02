@@ -49,6 +49,12 @@ Leave the window open for the whole session.
 
 ### Windows
 
+You need [WSL 2](https://learn.microsoft.com/windows/wsl/install) with Ubuntu (`wsl --install -d Ubuntu`), [Docker Desktop](https://docs.docker.com/desktop/setup/install/windows-install/), and the VS Code extensions **WSL** and **Dev Containers**.
+
+In Docker Desktop, open **Settings → Resources → WSL Integration**, turn on **Ubuntu**, and click **Apply & restart**. Check it in the Ubuntu terminal with `docker run --rm hello-world`. Keep Docker Desktop running while you work.
+
+Clone the repo inside WSL (for example to `~/RTS`), not on the Windows drive. The container setup has to be started from WSL, and a Windows checkout has CRLF line endings that break flashing.
+
 In WSL run `code .` in the RTS folder, then use **Reopen in Container** if VS Code doesn't do it for you. Open a terminal in VS Code.
 
 ### Linux
