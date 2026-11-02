@@ -1,0 +1,31 @@
+/*
+ * Adafruit SHARP Memory Display 1.3" (LS013B7DH05) on SPI1
+ *
+ *   SCLK -> D13 (PA5)
+ *   MOSI -> D11 (PA7)
+ *   CS   -> D10 (PD14)
+ */
+
+/ {
+	chosen {
+		/* Use this display in main.c */
+		zephyr,display = &sharp_lcd;
+	};
+};
+
+&spi1 {
+	status = "okay";
+	/* This display's chip select is active-high */
+	cs-gpios = <&gpiod 14 GPIO_ACTIVE_HIGH>;
+
+	sharp_lcd: ls0xx@0 {
+		compatible = "sharp,ls0xx";       /* Use the Sharp memory display driver */
+		reg = <0>;                        /* First chip select of SPI1 */
+		spi-max-frequency = <1000000>;    /* SPI speed: 1 MHz */
+		spi-cs-setup-delay-ns = <3000>;   /* Wait 3 µs after CS before sending */
+		spi-cs-hold-delay-ns = <1000>;    /* Wait 1 µs after sending before CS off */
+		width = <144>;                    /* Screen width in pixels */
+		height = <168>;                   /* Screen height in pixels */
+		serial-vcom-inversion;            /* No EXTCOMIN wire: toggle VCOM over SPI */
+	};
+};
