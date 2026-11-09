@@ -44,12 +44,15 @@ int main(void)
 		cfb_framebuffer_clear(display, false);
 		cfb_draw_text(display, "Air Quality", 17, 20);
 
+		/* Temperature in degrees Celsius */
 		snprintf(line, sizeof(line), "T: %.2f C", sensor_value_to_double(&temp));
 		cfb_draw_text(display, line, 2, 52);
 
+		/* Relative humidity in percent */
 		snprintf(line, sizeof(line), "H: %.2f %%", sensor_value_to_double(&humidity));
 		cfb_draw_text(display, line, 2, 76);
 
+		/* Air pressure in kilopascals: about 101 kPa at sea level */
 		snprintf(line, sizeof(line), "P: %.2f kPa", sensor_value_to_double(&pressure));
 		cfb_draw_text(display, line, 2, 100);
 
