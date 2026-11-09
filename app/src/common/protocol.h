@@ -9,9 +9,6 @@
 /* How long the Requester waits for a response before the transaction fails */
 #define PROTOCOL_TIMEOUT_MS 100
 
-/* Open1722 truncates received GBB payload lengths to 8 bits, see docs/open1722-notes.md */
-#define PROTOCOL_MAX_PAYLOAD 255
-
 /* Byte Buses on the Responder, see docs/architecture.md */
 enum byte_bus_id {
 	BYTE_BUS_BME280 = 1,
