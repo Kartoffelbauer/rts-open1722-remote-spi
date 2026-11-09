@@ -20,9 +20,7 @@ OPEN1722_INLINE uint8_t Avtp_Gbb_GetPayloadLength(const Avtp_Gbb_t *const pdu)
 
 `acf_msg_length` is 9 bits of quadlets, so a GBB payload can be up to about 2028 bytes, but the getter returns `uint8_t`. A received payload of 256 bytes or more comes back as `length % 256`. The setter (`Avtp_Gbb_SetPayloadLength`) already takes `uint16_t`, so only the receive side is affected.
 
-**Workaround in this project:** every GBB payload stays at or below 255 bytes. OLED updates are sent as one GBB Request per 128-byte SSD1306 RAM page.
-
-**Upstream fix (PR to COVESA wanted):** change the return type to `uint16_t` and add a test with a payload over 255 bytes in `unit/test-gbb.c`.
+**Upstream fix:** a PR to COVESA/Open1722 is open and waiting for approval. It changes the return type to `uint16_t` and adds a test with a payload over 255 bytes in `unit/test-gbb.c`. Once it is merged and the submodule is updated, no workaround is needed.
 
 ## Spec facts we rely on (IEEE 1722-2025)
 

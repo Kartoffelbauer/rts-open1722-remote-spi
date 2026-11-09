@@ -8,35 +8,36 @@ Terms in **bold** are defined in the [Glossary](../GLOSSARY.md). The reasons beh
 flowchart LR
     A["A: <b>NUCLEO-F439ZI</b><br/><i>Requester</i><br/>Device logic, builds GBB requests"]
     B["B: <b>NUCLEO-F439ZI</b><br/><i>Responder</i><br/>GBB request → SPI transfer"]
-    O["SSD1306 OLED<br/><i>SPI peripheral</i>"]
-    S["BME280<br/><i>SPI peripheral</i>"]
+    O["SHARP Memory Display<br/>LS013B7DH05<br/><i>SPI peripheral</i>"]
+    S["BME68x<br/><i>SPI peripheral</i>"]
 
     A -- "GBB over UDP<br/>Ethernet cable" --> B
     B -. "GBB response" .-> A
-    B -- "SPI1 + D/C, RES" --> O
+    B -- "SPI1" --> O
     B -- "SPI1" --> S
 ```
 
 | Link | Between | Medium | Protocol |
 |---|---|---|---|
 | Network | Requester ↔ Responder | Direct Ethernet cable, static IPs | IEEE 1722 over UDP (Annex J) |
-| SPI | Responder ↔ OLED / BME280 | Plain wires on the pins | SPI1, mode 0, 1 MHz, one CS per peripheral |
+| SPI | Responder ↔ Display / BME68x | Plain wires on the pins | SPI1, mode 0, 1 MHz, one CS per peripheral (settings per **Byte Bus**, see below) |
+
+The peripherals are an Adafruit SHARP Memory Display 1.3" (LS013B7DH05, 144×168 pixels, monochrome, write-only) and a BME68x environmental sensor (BME680 or BME688: temperature, humidity, pressure, gas resistance). See [Hardware](hardware.md).
 
 ## Roles
 
-- **Requester** (board A): holds all device knowledge. It has its own BME280 driver (register reads, calibration, compensation) and its own SSD1306 driver (init sequence, framebuffer, font rendering). It sends **GBB Requests**, handles the button, the **Display Pages** and the **Link Stats**.
-- **Responder** (board B): a dumb byte bus. It runs each GBB Request as one raw SPI transfer on the selected **Byte Bus** and sends back a **GBB Response**. It does not use Zephyr's `bme280` or `ssd1306` drivers ([ADR 0001](adr/0001-responder-is-a-dumb-byte-bus.md)).
+- **Requester** (board A): holds all device knowledge. It has its own BME68x driver (register page selection, calibration data, compensation, gas heater setup if gas readings are used) and its own SHARP display driver (framebuffer, font rendering, line writes, VCOM inversion). It sends **GBB Requests**, handles the button, the **Display Pages** and the **Link Stats**.
+- **Responder** (board B): a dumb byte bus. It runs each GBB Request as one raw SPI transfer on the selected **Byte Bus** and sends back a **GBB Response**. It does not use Zephyr's `bme680` or `ls0xx` drivers ([ADR 0001](adr/0001-responder-is-a-dumb-byte-bus.md)).
 
 ## Byte Buses
 
-| `byte_bus_id` | Byte Bus | Peripheral | Before the transfer |
+| `byte_bus_id` | Byte Bus | Peripheral | SPI settings |
 |---|---|---|---|
 | 0 | (unused, the spec's "unspecified" default) | none | answered with `err`=1 |
-| 1 | BME280 | BME280 | none |
-| 2 | OLED Command Bus | SSD1306 | D/C low |
-| 3 | OLED Data Bus | SSD1306 | D/C high |
+| 1 | Sensor Bus | BME68x | MSB first, CS active-low |
+| 2 | Display Bus | SHARP Memory Display | LSB first, CS active-high, 3 µs CS setup / 1 µs CS hold |
 
-The OLED is one peripheral reached through two Byte Buses because the D/C line can't be carried in GBB ([ADR 0002](adr/0002-oled-dc-line-via-two-byte-buses.md)). The Responder pulses the OLED's RES line once at boot.
+The display's VCOM inversion is done by the Requester over SPI ([ADR 0003](adr/0003-sharp-display-is-one-byte-bus.md)).
 
 ## Protocol
 
@@ -53,8 +54,8 @@ UDP → Annex J header (encapsulation_seq_no) → NTSCF header → one GBB ACF m
 **Requests.**
 
 - **Write Request** (`op`=1): the payload is clocked out in one CS assertion.
-- **Read Request** (`op`=0): the payload (e.g. a register address) is clocked out, then `read_size` bytes are read in the same CS assertion. The response carries only the bytes read (Annex O → Annex M, Figure M.7).
-- Every payload is at most 255 bytes. That works around an Open1722 bug, see [Open1722 Notes](open1722-notes.md). The OLED is therefore updated one 128-byte SSD1306 RAM page at a time, and only pages that changed are sent.
+- **Read Request** (`op`=0): the payload (e.g. a register address) is clocked out, then `read_size` bytes are read in the same CS assertion. The response carries only the bytes read (Annex O → Annex M, Figure M.7). Only the Sensor Bus uses Read Requests; the display has no MISO.
+- A full-screen display update is larger than one GBB message can carry, so the Requester splits display updates into several Write Requests and only sends lines that changed.
 
 **Transactions.**
 
@@ -65,7 +66,7 @@ UDP → Annex J header (encapsulation_seq_no) → NTSCF header → one GBB ACF m
 
 | Situation on the Responder | Reaction |
 |---|---|
-| Valid GBB Request that can't be executed: unknown Byte Bus, `read_size` of 0 or over 255, empty Write Request, SPI failure, busy | GBB Response with `err`=1 |
+| Valid GBB Request that can't be executed: unknown Byte Bus, Read Request on the Display Bus, `read_size` of 0 or larger than the Responder's buffer, empty Write Request, SPI failure, busy | GBB Response with `err`=1 |
 | Datagram that doesn't parse: too short, not NTSCF/GBB, `rsp`=1 | Drop and log, no response |
 
 On the Requester, both a timeout and an `err`=1 response count as a **Failed Transaction**.
@@ -85,8 +86,8 @@ One Zephyr app. The shared core is used by both roles, and each role has its own
 ```
 app/
   src/common/     GBB framing/parsing, UDP transport
-  src/requester/  main, BME280 driver, SSD1306 driver, display pages
-  src/responder/  main, Byte Bus table (byte_bus_id → spi_config, CS, D/C)
+  src/requester/  main, BME68x driver, SHARP display driver, display pages
+  src/responder/  main, Byte Bus table (byte_bus_id → spi_config incl. CS)
   tests/          ztest suite for src/common/ on native_sim
   requester.conf / responder.conf
   boards/         per-role overlays for nucleo_f439zi
@@ -99,15 +100,15 @@ The role is chosen at build time with `-DROLE=requester` or `-DROLE=responder`. 
 
 | Signal | MCU pin | Nucleo header | Peripheral pin |
 |---|---|---|---|
-| SPI1 SCK | PA5 | D13 | BME280 SCL/SCK, OLED CLK/D0 |
-| SPI1 MISO | PA6 | D12 | BME280 SDO (the OLED has no MISO) |
-| SPI1 MOSI | **PB5** | D22 (ZIO) | BME280 SDA/SDI, OLED DIN/D1 |
-| CS BME280 | PD14 | D10 | BME280 CSB |
-| CS OLED | PD15 | D9 | OLED CS |
-| OLED D/C | PF12 | D8 | OLED DC |
-| OLED RES | PF13 | D7 | OLED RES |
+| SPI1 SCK | PA5 | D13 | BME68x SCL/SCK, display CLK |
+| SPI1 MISO | PA6 | D12 | BME68x SDO (the display has no MISO) |
+| SPI1 MOSI | **PB5** | D22 (ZIO) | BME68x SDA/SDI, display DI |
+| CS display | PD14 | D10 | display CS (active-high) |
+| CS BME68x | PD15 | D9 | BME68x CS (active-low) |
 
-MOSI is on PB5 instead of the board's default PA7, because PA7 carries the Ethernet RMII CRS_DV signal. Check the header position of PB5 against the NUCLEO-144 user manual (UM1974) before wiring.
+The chip selects match the standalone [`air_quality`](../examples/air_quality) example, so the same wiring works for both. Only MOSI differs: the examples use the board's default PA7 (D11), but the app uses PB5, because PA7 carries the Ethernet RMII CRS_DV signal. Move the MOSI wire from D11 to PB5 when switching from an example to the app, and check the header position of PB5 against the NUCLEO-144 user manual (UM1974) before wiring.
+
+The display's DISP and EXTMODE/EXTCOMIN pins stay unconnected (the breakout's defaults: display on, VCOM inverted over SPI).
 
 ## Demo flow
 
@@ -115,24 +116,25 @@ MOSI is on PB5 instead of the board's default PA7, because PA7 carries the Ether
 sequenceDiagram
     participant A as Requester
     participant B as Responder
-    participant S as BME280
-    participant O as SSD1306 OLED
+    participant S as BME68x
+    participant O as SHARP Display
 
-    Note over A,B: Startup: Responder pulses OLED RES.<br/>Requester sends the SSD1306 init sequence, retrying every 1 s until it gets a response.
+    Note over A,B: Startup: Requester reads the BME68x chip ID and calibration data,<br/>then clears the display, retrying every 1 s until it gets a response.
     loop Every 1 s
+        A->>B: Write Request (Byte Bus 1: start a forced measurement)
+        B->>S: SPI transfer (one CS assertion)
+        B-->>A: GBB Response
         A->>B: Read Request (Byte Bus 1, register address, read_size)
         B->>S: SPI transfer (one CS assertion)
         S-->>B: Register data
         B-->>A: GBB Response (read data)
         Note over A: Compensate, render current Display Page
-        loop For each changed SSD1306 page
-            A->>B: Write Request (Byte Bus 2: set page/column)
-            B->>O: SPI transfer, D/C low
-            B-->>A: GBB Response
-            A->>B: Write Request (Byte Bus 3: 128 pixel bytes)
-            B->>O: SPI transfer, D/C high
+        loop For each block of changed lines
+            A->>B: Write Request (Byte Bus 2: mode byte with VCOM bit, lines, trailer)
+            B->>O: SPI transfer, LSB first
             B-->>A: GBB Response
         end
+        Note over A: If no line changed, send a 2-byte VCOM-only Write Request instead
     end
     Note over A: Button press → next Display Page
 ```

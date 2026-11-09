@@ -3,8 +3,8 @@
 | Item | Amount |
 |---|---|
 | NUCLEO-F439ZI | 2 (already owned) |
-| SSD1306 SPI OLED display (e.g. Waveshare, Adafruit) | 1 |
-| BME280, SPI-capable, or other SPI sensor for testing purposes | 1 |
+| Adafruit SHARP Memory Display 1.3" (LS013B7DH05, 144×168, monochrome) | 1 |
+| BME68x breakout (BME680 or BME688), SPI-capable | 1 |
 | Breadboard | 1 |
 | Ethernet cable | 1 |
 | USB cables for the boards (power, flashing, serial) | 2 |
@@ -15,5 +15,5 @@ Double the amount would be nice for sub-group testing.
 
 ## Where it connects
 
-- The OLED and the BME280 are wired to **Board B** only. See [Architecture](architecture.md).
+- The display and the BME68x are wired to **Board B** only. See [Architecture](architecture.md#wiring-responder) for the pins.
 - Both boards are linked by the Ethernet cable and each needs its own USB cable for power, flashing and serial. See [Getting Started](getting-started.md).

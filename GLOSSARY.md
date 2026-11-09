@@ -15,7 +15,7 @@ The board that has the peripherals wired to it and executes received GBB Request
 _Avoid_: Board B, SPI master, server, receiver
 
 **Peripheral**:
-A device on the Responder's SPI bus (the BME280 or the SSD1306 OLED).
+A device on the Responder's SPI bus (the BME68x sensor or the SHARP Memory Display).
 _Avoid_: SPI slave, device
 
 ### Protocol
@@ -26,7 +26,7 @@ _Avoid_: SPI packet, remote SPI message
 
 **GBB Request**:
 A GBB message from the Requester asking the Responder to perform one transfer on a given Byte Bus.
-_Avoid_: command (reserved for SSD1306 commands)
+_Avoid_: command (reserved for the display's mode byte commands)
 
 **Write Request**:
 A GBB Request whose payload is clocked out on the Byte Bus in one bus transaction.
@@ -39,15 +39,15 @@ _Avoid_: write-then-read, transceive
 The GBB message the Responder returns for exactly one GBB Request, carrying its outcome and any bytes read.
 
 **Byte Bus**:
-One addressable target on the Responder, selected by its Byte Bus ID, that a GBB Request is executed against. A Peripheral may be reachable through several Byte Buses; the OLED has an OLED Command Bus and an OLED Data Bus.
+One addressable target on the Responder, selected by its Byte Bus ID, that a GBB Request is executed against. Each Byte Bus has its own SPI settings (chip select, bit order).
 _Avoid_: channel, port
 
-**OLED Command Bus**:
-The Byte Bus whose bytes the OLED interprets as SSD1306 commands.
+**Sensor Bus**:
+The Byte Bus that reaches the BME68x.
 
-**OLED Data Bus**:
-The Byte Bus whose bytes the OLED interprets as display RAM contents.
-_Avoid_: pixel bus, framebuffer bus
+**Display Bus**:
+The Byte Bus that reaches the SHARP Memory Display. It carries both display commands and pixel data.
+_Avoid_: OLED bus, pixel bus, framebuffer bus
 
 **Failed Transaction**:
 A GBB Request that ended in a GBB Response with the error flag set, or got no matching response in time.
@@ -59,5 +59,5 @@ _Avoid_: lost packet, NACK
 The Requester's counters of sent requests, timeouts and error responses, plus min/avg/max round-trip time.
 
 **Display Page**:
-One of the screens the Requester cycles through on the OLED with the button (e.g. temperature, pressure, humidity, link stats).
-_Avoid_: screen, view (and not to be confused with SSD1306 RAM pages)
+One of the screens the Requester cycles through on the display with the button (e.g. temperature, pressure, humidity, gas resistance, link stats).
+_Avoid_: screen, view (and not to be confused with the BME68x's register memory pages)

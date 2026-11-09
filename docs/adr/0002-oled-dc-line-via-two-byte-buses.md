@@ -1,5 +1,7 @@
 # The OLED's D/C line is selected through two Byte Buses
 
+**Status:** superseded by [ADR 0003](0003-sharp-display-is-one-byte-bus.md). The project no longer uses the SSD1306 OLED. The SHARP Memory Display that replaced it has no D/C line.
+
 The SPI SSD1306 needs a Data/Command GPIO, but GBB only carries bytes. We expose the OLED as two Byte Buses that share the same SPI chip select: the **OLED Command Bus** (Responder drives D/C low) and the **OLED Data Bus** (D/C high). The Responder sets D/C from the `byte_bus_id` before the transfer, so it still doesn't interpret the bytes (see [ADR 0001](0001-responder-is-a-dumb-byte-bus.md)). As a result, one Peripheral can have several Byte Buses.
 
 ## Considered Options

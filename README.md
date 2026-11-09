@@ -1,8 +1,8 @@
 # RTS Open1722 Remote SPI
 
-Control an SPI OLED display and a BME280 sensor remotely using IEEE 1722 Generic Byte Bus (GBB) messages. One Nucleo board sends SPI transactions over Ethernet, a second Nucleo receives them and executes them on its own SPI pins.
+Control an SPI display and a BME68x sensor remotely using IEEE 1722 Generic Byte Bus (GBB) messages. One Nucleo board sends SPI transactions over Ethernet, a second Nucleo receives them and executes them on its own SPI pins.
 
-**Demo:** the Requester periodically reads the remote BME280 and shows the values on the remote OLED; its button cycles through the display pages.
+**Demo:** the Requester periodically reads the remote BME68x and shows the values on the remote SHARP Memory Display; its button cycles through the display pages.
 
 ## Overview
 
@@ -10,8 +10,8 @@ Control an SPI OLED display and a BME280 sensor remotely using IEEE 1722 Generic
 flowchart LR
     A["A: <b>NUCLEO-F439ZI</b><br/><i>Requester</i><br/>Builds GBB requests"]
     B["B: <b>NUCLEO-F439ZI</b><br/><i>Responder</i><br/>GBB request → SPI transfer"]
-    O["SSD1306 OLED<br/><i>Peripheral</i>"]
-    S["BME280<br/><i>Peripheral</i>"]
+    O["SHARP Memory Display<br/><i>Peripheral</i>"]
+    S["BME68x<br/><i>Peripheral</i>"]
 
     A -- "GBB over UDP<br/>Ethernet cable" --> B
     B -. "GBB response" .-> A
@@ -20,7 +20,7 @@ flowchart LR
 ```
 
 - **Network link:** Requester ↔ Responder over Ethernet (static IPs, IEEE 1722 over UDP, Annex J)
-- **SPI link:** Responder ↔ OLED / BME280 over plain wires (no network)
+- **SPI link:** Responder ↔ display / BME68x over plain wires (no network)
 
 See [Architecture](docs/architecture.md) for details.
 
@@ -28,7 +28,7 @@ See [Architecture](docs/architecture.md) for details.
 
 - [Zephyr RTOS](https://zephyrproject.org/) on both boards
 - [Open1722](https://github.com/COVESA/Open1722) for GBB message handling
-- 2× NUCLEO-F439ZI, SSD1306 SPI OLED, BME280
+- 2× NUCLEO-F439ZI, Adafruit SHARP Memory Display 1.3" (LS013B7DH05), BME68x (BME680/BME688)
 
 ## Quick Start
 
