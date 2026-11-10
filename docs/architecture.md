@@ -44,32 +44,38 @@ The display's VCOM inversion is done by the Requester over SPI ([ADR 0003](adr/0
 **Framing.** One GBB message per UDP datagram:
 
 ```
-UDP → Annex J header (encapsulation_seq_no) → NTSCF header → one GBB ACF message
+UDP → Annex J header (4) → NTSCF v0 header (12) → GBB header (16) → payload → pad (0-3)
 ```
 
 - Requester: 192.168.1.10, sends from an ephemeral port.
 - Responder: 192.168.1.11, listens on UDP 17220 (the IANA AVTP port) and replies to the source address and port of the request.
-- Open1722 builds and parses the headers.
+- Open1722 builds and parses the headers, wrapped by `src/common/gbb.h`.
+- NTSCF version 0 with `sv`=0 (stream without a reservation, §9.2.2). The `stream_id` is the sender's MAC address followed by a 16-bit ID (§4.6).
+- Each sender increments the Annex J `encapsulation_sequence_num` and the NTSCF `sequence_num_lsb` per datagram. The receiver ignores both, and the `stream_id`.
+- A datagram that isn't exactly one GBB message (a second ACF message, ABB, bytes left over) is dropped.
 
 **Requests.**
 
 - **Write Request** (`op`=1): the payload is clocked out in one CS assertion.
 - **Read Request** (`op`=0): the payload (e.g. a register address) is clocked out, then `read_size` bytes are read in the same CS assertion. The response carries only the bytes read (Annex O → Annex M, Figure M.7). Only the Sensor Bus uses Read Requests; the display has no MISO.
+- `read_size` is decoded as in §9.4.14.14: with bit 11 set, the value is in KiB (`0x800` also means 1 KiB).
+- Segmentation (`ms`, `segment_num`) isn't used. Every request and response fits in one datagram.
 - A full-screen display update is larger than one GBB message can carry, so the Requester splits display updates into several Write Requests and only sends lines that changed.
 
 **Transactions.**
 
 - At most one request is outstanding at a time. The timeout is 100 ms, with no retry.
-- The Requester increments `transaction_num` for each request (wrapping at 255). The Responder echoes it, and the Requester throws away any response whose number doesn't match.
+- The Requester increments `transaction_num` for each request (wrapping at 255). The Responder echoes it together with `byte_bus_id` and `op`, and the Requester throws away any response where one of them doesn't match.
+- A matching response fails if `err`=1 or if a read response doesn't carry exactly `read_size` bytes.
 
 **Errors.**
 
 | Situation on the Responder | Reaction |
 |---|---|
-| Valid GBB Request that can't be executed: unknown Byte Bus, Read Request on the Display Bus, `read_size` of 0 or larger than the Responder's buffer, empty Write Request, SPI failure, busy | GBB Response with `err`=1 |
-| Datagram that doesn't parse: too short, not NTSCF/GBB, `rsp`=1 | Drop and log, no response |
+| Valid GBB Request that can't be executed: unknown Byte Bus, Read Request on the Display Bus, `read_size` of 0 bytes or larger than the Responder's buffer, empty Write Request, segmented request (`ms`=1 or `segment_num`≠0), SPI failure, busy | GBB Response with `err`=1 |
+| Datagram that doesn't parse: too short, not NTSCF v0 with exactly one GBB message, `rsp`=1 | Drop and log, no response |
 
-On the Requester, both a timeout and an `err`=1 response count as a **Failed Transaction**.
+On the Requester, a timeout and a failed matching response both count as a **Failed Transaction**.
 
 ## Status LEDs
 
@@ -85,10 +91,10 @@ One Zephyr app. The shared core is used by both roles, and each role has its own
 
 ```
 app/
-  src/common/     GBB framing/parsing, UDP transport
+  src/common/     GBB framing/parsing (gbb.h), UDP transport, protocol constants
   src/requester/  main, BME68x driver, SHARP display driver, display pages
   src/responder/  main, Byte Bus table (byte_bus_id → spi_config incl. CS)
-  tests/          ztest suite for src/common/ on native_sim
+  tests/common/   ztest suite for gbb.h on native_sim
   requester.conf / responder.conf
   boards/         per-role overlays for nucleo_f439zi
 lib/open1722/     git submodule, pinned commit

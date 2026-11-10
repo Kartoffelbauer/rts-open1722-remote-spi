@@ -1,0 +1,69 @@
+#include "test_data.h"
+
+/* stream_id bytes, see REQUESTER_STREAM_ID / RESPONDER_STREAM_ID */
+#define REQUESTER_ID_BYTES 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x00, 0x01
+#define RESPONDER_ID_BYTES 0x00, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0x00, 0x02
+
+/* message_timestamp (mtv=0) */
+#define NO_TIMESTAMP 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+
+const uint8_t golden_write_request[36] = {
+	/* Annex J: encapsulation_sequence_num */
+	0x01, 0x02, 0x03, 0x04,
+	/* NTSCF: subtype 0x82 | sv=0, version 0, ntscf_data_length 20 | sequence_num_lsb 5 */
+	0x82, 0x00, 0x14, 0x05,
+	REQUESTER_ID_BYTES,
+	/* GBB: acf_msg_type 0x0D, acf_msg_length 5 quadlets | pad 1, mtv 0, byte_bus_id 2 */
+	0x1A, 0x05, 0x40, 0x02,
+	NO_TIMESTAMP,
+	/* evt/hs/cs 0 | transaction_num 0x10 | op=1 rsp=0 err=0 ms=0, segment_num 0 */
+	0x00, 0x10, 0x80, 0x00,
+	/* payload + 1 pad byte */
+	0xAA, 0xBB, 0xCC, 0x00,
+};
+
+const uint8_t golden_read_request[36] = {
+	0x01, 0x02, 0x03, 0x05,
+	/* ntscf_data_length 20, sequence_num_lsb 6 */
+	0x82, 0x00, 0x14, 0x06,
+	REQUESTER_ID_BYTES,
+	/* acf_msg_length 5 | pad 3, byte_bus_id 1 */
+	0x1A, 0x05, 0xC0, 0x01,
+	NO_TIMESTAMP,
+	/* transaction_num 0x11 | op=0 rsp=0 err=0 ms=0, read_size 1 */
+	0x00, 0x11, 0x00, 0x01,
+	/* payload + 3 pad bytes */
+	0xD0, 0x00, 0x00, 0x00,
+};
+
+const uint8_t golden_read_response[36] = {
+	0x00, 0x00, 0x00, 0x07,
+	/* ntscf_data_length 20, sequence_num_lsb 9 */
+	0x82, 0x00, 0x14, 0x09,
+	RESPONDER_ID_BYTES,
+	/* acf_msg_length 5 | pad 3, byte_bus_id 1 */
+	0x1A, 0x05, 0xC0, 0x01,
+	NO_TIMESTAMP,
+	/* transaction_num 0x11 | op=0 rsp=1 err=0 ms=0, segment_num 0 */
+	0x00, 0x11, 0x40, 0x00,
+	0x61, 0x00, 0x00, 0x00,
+};
+
+const uint8_t golden_error_response[32] = {
+	0x00, 0x00, 0x00, 0x08,
+	/* ntscf_data_length 16, sequence_num_lsb 10 */
+	0x82, 0x00, 0x10, 0x0A,
+	RESPONDER_ID_BYTES,
+	/* acf_msg_length 4 | pad 0, byte_bus_id 2 */
+	0x1A, 0x04, 0x00, 0x02,
+	NO_TIMESTAMP,
+	/* transaction_num 0x10 | op=1 rsp=1 err=1 ms=0, segment_num 0 */
+	0x00, 0x10, 0xE0, 0x00,
+};
+
+void fill_pattern(uint8_t *buf, size_t len)
+{
+	for (size_t i = 0; i < len; i++) {
+		buf[i] = (uint8_t)(i * 7 + 1);
+	}
+}

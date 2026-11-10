@@ -132,6 +132,24 @@ west flash -d build/responder
 
 To force a specific address, set it inline: `OPENOCD_REMOTE_HOST=<IP> west flash -d build/requester`.
 
+## Run the core tests
+
+The GBB framing and parsing in `app/src/common/gbb.h` has a ztest suite in `app/tests/common`. It runs on `native_sim`, so no board is needed. Run it from the workspace folder in the container:
+
+```bash
+west build -p always -b native_sim/native/64 app/tests/common -d build/tests -t run
+```
+
+The output ends with a summary line per suite and `PROJECT EXECUTION SUCCESSFUL` or `PROJECT EXECUTION FAILED`.
+
+To run it through twister instead (results go to `twister-out/`):
+
+```bash
+west twister -T app/tests -p native_sim/native/64
+```
+
+The 32-bit `-p native_sim` works too, but only on amd64 hosts, because it needs `gcc-multilib`.
+
 ## Next steps
 
 - Understand the setup: [Architecture](architecture.md)
