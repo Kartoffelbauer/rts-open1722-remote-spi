@@ -1,0 +1,4 @@
+# Adds CONFIG_REMOTE_SPI_LOG_LEVEL (OFF/ERR/WRN/INF/DBG) for the example's own log messages
+module = REMOTE_SPI
+module-str = Remote SPI example
+source "subsys/logging/Kconfig.template.log_config"

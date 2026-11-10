@@ -1,0 +1,43 @@
+/*
+ * Same wiring as examples/air_quality, except MOSI: PA7 (D11) is the Ethernet
+ * RMII CRS_DV pin on this board, so with networking on MOSI moves to PB5
+ *
+ *   SCLK -> D13 (PA5)  -> display CLK, sensor SCL
+ *   MOSI -> PB5        -> display DI,  sensor SDA   (moved from D11!)
+ *   MISO -> D12 (PA6)  -> sensor SDO (the display has no MISO)
+ *   CS   -> D10 (PD14) -> display CS
+ *   CS   -> D9  (PD15) -> sensor CS
+ */
+
+/ {
+	chosen {
+		/* Use this display in main.c */
+		zephyr,display = &sharp_lcd;
+	};
+};
+
+&spi1 {
+	status = "okay";
+	/* SCK on PA5, MISO on PA6, MOSI on PB5 instead of the board default PA7 */
+	pinctrl-0 = <&spi1_sck_pa5 &spi1_miso_pa6 &spi1_mosi_pb5>;
+	/* One chip select per device: the display's is active-high, the sensor's active-low */
+	cs-gpios = <&gpiod 14 GPIO_ACTIVE_HIGH>,
+		   <&gpiod 15 GPIO_ACTIVE_LOW>;
+
+	sharp_lcd: ls0xx@0 {
+		compatible = "sharp,ls0xx";       /* Use the Sharp memory display driver */
+		reg = <0>;                        /* First chip select of SPI1 */
+		spi-max-frequency = <1000000>;    /* SPI speed: 1 MHz */
+		spi-cs-setup-delay-ns = <3000>;   /* Wait 3 µs after CS before sending */
+		spi-cs-hold-delay-ns = <1000>;    /* Wait 1 µs after sending before CS off */
+		width = <144>;                    /* Screen width in pixels */
+		height = <168>;                   /* Screen height in pixels */
+		serial-vcom-inversion;            /* No EXTCOMIN wire: toggle VCOM over SPI */
+	};
+
+	bme68x: bme680@1 {
+		compatible = "bosch,bme680";      /* Use the BME680 driver (also works for the BME688) */
+		reg = <1>;                        /* Second chip select of SPI1 */
+		spi-max-frequency = <1000000>;    /* SPI speed: 1 MHz */
+	};
+};

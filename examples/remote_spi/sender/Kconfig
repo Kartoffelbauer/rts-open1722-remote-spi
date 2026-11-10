@@ -1,0 +1,5 @@
+# The example's own options (log level), shared with the other board
+rsource "../common/Kconfig"
+
+# All of Zephyr's options
+source "Kconfig.zephyr"
