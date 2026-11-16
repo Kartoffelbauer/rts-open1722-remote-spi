@@ -1,30 +1,18 @@
 # Open1722 Notes
 
-Findings about [Open1722](https://github.com/COVESA/Open1722) that affect this project. Checked against `main` at `b78c387` (2026-10-26).
+Findings about [Open1722](https://github.com/COVESA/Open1722) that affect this project. Checked against `main` at `906a0de` (2026-11-05).
 
 ## GBB support in Open1722
 
 - GBB lives entirely in the header [`include/avtp/acf/Gbb.h`](https://github.com/COVESA/Open1722/blob/main/include/avtp/acf/Gbb.h). It has a unit test (`unit/test-gbb.c`) but **no example app**.
-- The abbreviated version of GBB is called **ABB** (Abreviated Byte Bus) (§9.4.15). It can be found in [`include/avtp/acf/Abb.h`](https://github.com/COVESA/Open1722/blob/main/include/avtp/acf/Abb.h). Our Responder currently only parses the full format, which is fine as long as our Requester is the only Talker.
+- The abbreviated version of GBB is called **ABB** (Abbreviated Byte Bus) (§9.4.15). It can be found in [`include/avtp/acf/Abb.h`](https://github.com/COVESA/Open1722/blob/main/include/avtp/acf/Abb.h). The Responder only parses the full format, which is fine as long as the Requester is the only Talker.
 - Open1722 is **not a Zephyr module**. Its only Zephyr app (`examples/acf-can/zephyr`) is built from inside the Open1722 repo.
 
-## Bug: `Avtp_Gbb_GetPayloadLength()` truncates to 8 bits
+## Fixed: `Avtp_Gbb_GetPayloadLength()` truncated to 8 bits
 
-```c
-OPEN1722_INLINE uint8_t Avtp_Gbb_GetPayloadLength(const Avtp_Gbb_t *const pdu)
-{
-    ...
-    return (uint8_t)(acf_length_bytes - AVTP_GBB_HEADER_LEN - pad_length);
-}
-```
-
-`acf_msg_length` is 9 bits of quadlets, so a GBB payload can be up to about 2028 bytes, but the getter returns `uint8_t`. A received payload of 256 bytes or more comes back as `length % 256`. The setter (`Avtp_Gbb_SetPayloadLength`) already takes `uint16_t`, so only the receive side is affected.
-
-**Upstream fix:** a PR to COVESA/Open1722 is open and waiting for approval. It changes the return type to `uint16_t` and adds a test with a payload over 255 bytes in `unit/test-gbb.c`. Once it is merged and the submodule is updated, no workaround is needed.
+Up to `v0.9.7`, the getter returned `uint8_t`, so a received payload of 256 bytes or more came back as `length % 256`. Our upstream PR changed the return type to `uint16_t` and added a test with a payload over 255 bytes. It is merged as [`906a0de`](https://github.com/COVESA/Open1722/commit/906a0de94490c3f45d5c6e897996ecbc477a0d91), and payloads up to the GBB maximum of 2028 bytes are read correctly.
 
 ## Spec facts we rely on (IEEE 1722-2025)
-
-The spec PDF is in [1722-2025.pdf](1722-2025.pdf).
 
 | Field | Meaning (§9.4.14) |
 |---|---|
