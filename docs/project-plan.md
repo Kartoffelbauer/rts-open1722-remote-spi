@@ -6,8 +6,8 @@
 | 1a | **Build structure:** add Open1722 as submodule, split app into `common/` + `requester/` + `responder/` with role `.conf` files and overlays, replace the old I2C overlay with SPI1 | ✅ |
 | 2 | **Local test on Board B:** read the BME68x, then show text on the SHARP display, all without network | ✅ |
 | 3 | **Network test:** Ethernet + static IPs, UDP echo A ↔ B | ✅ |
-| 4a | **Core tests:** GBB framing and parsing in `common/` with a ztest suite on `native_sim` (Write/Read Request build, Response parse, `transaction_num` matching, malformed datagrams) | ✅ |
-| 4 | **GBB message:** Board A sends a GBB Write Request built with the `common/` code from 4a, Board B parses it and logs the bytes | 🟡 |
+| 4a | **Core tests:** ztest suite on `native_sim` for the GBB framing and parsing API in `common/gbb.h` (Write/Read Request build, Response parse, `transaction_num` matching, malformed datagrams) | ✅ |
+| 4 | **GBB message:** implement `common/gbb.c` against the 4a tests, Board A sends a GBB Write Request built with it, Board B parses it and logs the bytes | 🟡 |
 | 5 | **Responder:** Byte Bus table (`byte_bus_id` → `spi_config` incl. CS polarity and bit order), run the SPI transfer, send GBB Response, `err`=1 on failure | ⬜ |
 | 6 | **Milestone 1:** Board A reads the BME68x chip ID (`0x61`) remotely | ⬜ |
 | 7 | **Milestone 2:** Board A polls the BME68x every second and shows it on the remote display, button cycles Display Pages, status LEDs, Link Stats page | ⬜ |
@@ -20,7 +20,7 @@
 
 - Tasks 2 and 3 need only setup (1) and the build structure (1a), so they can run in parallel.
 - The core tests (4a) run on `native_sim` and need no hardware, so they only need the build structure (1a).
-- Task 4 needs the network (3) and the core (4a).
+- Task 4 needs the network (3) and the core tests (4a).
 - Task 5 needs both the local SPI test (2) and the GBB message (4).
 - Tasks 6 to 8 each build on the step before.
 - The upstream PR (9) doesn't depend on anything else and can be done whenever there's time.
