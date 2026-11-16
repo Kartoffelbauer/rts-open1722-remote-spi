@@ -85,11 +85,13 @@ Run `code .` in the repo folder, then use **Reopen in Container** if VS Code doe
 
 ### Both
 
-If you cloned without `--recurse-submodules`, fetch Open1722 once:
+If you cloned without `--recurse-submodules`, fetch Open1722:
 
 ```bash
 git submodule update --init
 ```
+
+Run the same command again after a `git pull` that moves `lib/open1722` to a new commit (`git status` then shows `lib/open1722` as modified), otherwise the build uses the old Open1722.
 
 ## 4. Build the app
 
