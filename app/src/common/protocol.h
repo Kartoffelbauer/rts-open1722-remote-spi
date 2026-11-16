@@ -11,9 +11,8 @@
 
 /* Byte Buses on the Responder, see docs/architecture.md */
 enum byte_bus_id {
-	BYTE_BUS_BME280 = 1,
-	BYTE_BUS_OLED_COMMAND = 2,
-	BYTE_BUS_OLED_DATA = 3,
+	BYTE_BUS_SENSOR = 1,	/* BME68x */
+	BYTE_BUS_DISPLAY = 2,	/* SHARP Memory Display */
 };
 
 BUILD_ASSERT(AVTP_GBB_HEADER_LEN == 16, "GBB header must be 16 bytes (IEEE 1722-2025 9.4.14)");

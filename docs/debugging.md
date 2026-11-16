@@ -27,7 +27,7 @@ To view the data transfer (over ethernet) between the board and the pc (therefor
 2. Set the Ethernet IP Address manually for your pc (follow any online guide on how to do that).
     - Submask should always be `255.255.255.0`
     - To test the requester set the IP Address to `192.168.1.11` as you are simulating the responder
-    - To test the responder set the IP Adress to `192.168.1.10` as you are simulating the requester
+    - To test the responder set the IP Address to `192.168.1.10` as you are simulating the requester
 3. Start Wireshark (install it if not already installed)
 4. Go to Ethernet and filter by `udp.port == 17220`
 

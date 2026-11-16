@@ -1,6 +1,6 @@
 # The SHARP Memory Display is one Byte Bus; the Requester inverts VCOM
 
-**Status:** proposed. Supersedes [ADR 0002](0002-oled-dc-line-via-two-byte-buses.md).
+**Status:** accepted. Supersedes [ADR 0002](0002-oled-dc-line-via-two-byte-buses.md).
 
 The project switched from an SSD1306 OLED and a BME280 to an Adafruit SHARP Memory Display 1.3" (LS013B7DH05) and a BME68x, because that is the hardware we have. The SHARP display has no D/C line and no reset line: commands and pixel data share one SPI stream, told apart by a mode byte at the start of each transfer. So the display is reached through a single **Display Bus**, and the reason for ADR 0002 is gone.
 

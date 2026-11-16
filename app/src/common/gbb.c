@@ -11,7 +11,7 @@ BUILD_ASSERT(GBB_HEADERS_LEN == AVTP_UDP_HEADER_LEN + AVTP_NTSCF_HEADER_LEN_V0 +
 
 /*
  * Stubs: the tests in app/tests/common are written first and fail against these.
- * The real implementation follows in task 4a.
+ * The real implementation follows in task 4.
  */
 
 int gbb_build_write_request(struct gbb_stream *stream, uint16_t byte_bus_id, const uint8_t *data,

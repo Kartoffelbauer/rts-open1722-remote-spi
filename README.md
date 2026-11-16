@@ -52,7 +52,7 @@ openocd -f board/st_nucleo_f4.cfg -c "bindto 172.17.0.1" -c "reset_config srst_o
 #### Get Open1722
 
 ```bash
-git submodule update --init   # once, fetches Open1722
+git submodule update --init   # after cloning and after each pull that moves lib/open1722
 ```
 
 #### Build and Flash
@@ -77,7 +77,8 @@ west flash -d build/responder
 | [Hardware](docs/hardware.md) | Required hardware list |
 | [Project Plan](docs/project-plan.md) | Tasks, dependencies and milestones |
 | [Troubleshooting](docs/troubleshooting.md) | Toolchain checks and common errors |
-| [Open1722 Notes](docs/open1722-notes.md) | GBB support, known bugs, spec field summary |
+| [Debugging](docs/debugging.md) | Serial logs and network traffic with one board and a PC |
+| [Open1722 Notes](docs/open1722-notes.md) | GBB support, fixed bugs, spec field summary |
 | [Decisions](docs/adr/) | Architecture decision records |
 | [Glossary](GLOSSARY.md) | Project terminology |
 
