@@ -125,9 +125,8 @@ ZTEST(gbb_parse, test_round_trip_small_payloads)
 }
 
 /*
- * Fails until the Open1722 fix for Avtp_Gbb_GetPayloadLength() is merged and the
- * submodule is updated: the getter truncates payload lengths to 8 bits, see
- * docs/open1722-notes.md.
+ * Needs Open1722 906a0de or later: before that, Avtp_Gbb_GetPayloadLength()
+ * truncated payload lengths to 8 bits (see docs/open1722-notes.md).
  */
 ZTEST(gbb_parse, test_round_trip_payloads_over_255_bytes)
 {
