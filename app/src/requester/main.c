@@ -1,8 +1,7 @@
-#include <errno.h>
-#include <string.h>
 #include <zephyr/kernel.h>
 #include <zephyr/drivers/gpio.h>
 
+#include "gbb.h"
 #include "protocol.h"
 #include "transport_udp.h"
 
@@ -11,35 +10,40 @@ static const struct gpio_dt_spec err_led = GPIO_DT_SPEC_GET(DT_ALIAS(link_err_le
 static const struct gpio_dt_spec button = GPIO_DT_SPEC_GET(DT_ALIAS(page_button), gpios);
 static struct gpio_callback button_cb;
 
+/* Test payload for task 4: 9 bytes, so the message also carries 3 pad bytes */
+static const uint8_t test_payload[] = {0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF, 0x55};
+
+static uint8_t tx_buf[GBB_DATAGRAM_LEN(sizeof(test_payload))];
+static struct gbb_stream stream;
+
 static void button_pressed(const struct device *dev, struct gpio_callback *cb, uint32_t pins)
 {
 	/* Placeholder until Display Pages exist (task 7) */
 	printk("button pressed\n");
 }
 
-/* Sends one ping and waits for its echo. Returns 0, -EAGAIN on timeout or a negative errno. */
-static int ping(int sock, const struct net_sockaddr_in *responder, uint32_t seq)
+/* Builds and sends one Write Request with the test payload. Returns 0 or a negative errno. */
+static int send_write_request(int sock, const struct net_sockaddr_in *responder)
 {
-	char tx[32];
-	char rx[32];
-	int len = snprintk(tx, sizeof(tx), "ping %u", seq);
-	int ret = transport_send(sock, responder, tx, len);
+	struct gbb_msg req;
+	int len = gbb_build_write_request(&stream, BYTE_BUS_DISPLAY, test_payload,
+					  sizeof(test_payload), tx_buf, sizeof(tx_buf), &req);
+
+	if (len < 0) {
+		printk("Write Request not built (%d)\n", len);
+		return len;
+	}
+
+	int ret = transport_send(sock, responder, tx_buf, len);
 
 	if (ret < 0) {
+		printk("Write Request %u not sent (%d)\n", req.transaction_num, ret);
 		return ret;
 	}
 
-	/* Drop stale echoes of earlier pings that timed out */
-	for (;;) {
-		ret = transport_recv(sock, NULL, rx, sizeof(rx));
-		if (ret < 0) {
-			return ret;
-		}
-		if (ret == len && memcmp(rx, tx, len) == 0) {
-			return 0;
-		}
-		printk("ping %u: dropped stale echo\n", seq);
-	}
+	printk("Write Request %u sent: Byte Bus %u, %u payload bytes, %d-byte datagram\n",
+	       req.transaction_num, req.byte_bus_id, (unsigned int)req.payload_len, len);
+	return 0;
 }
 
 int main(void)
@@ -74,23 +78,20 @@ int main(void)
 		return 0;
 	}
 
-	printk("Requester up, pinging %s:%d\n", CONFIG_NET_CONFIG_PEER_IPV4_ADDR, PROTOCOL_UDP_PORT);
+	stream.stream_id = transport_stream_id(PROTOCOL_STREAM_UNIQUE_ID);
 
-	/* Temporary echo test (task 3), replaced by GBB Requests in task 4 */
-	for (uint32_t seq = 0;; seq++) {
-		uint32_t start = k_cycle_get_32();
-		int ret = ping(sock, &responder, seq);
-		uint32_t rtt_us = k_cyc_to_us_floor32(k_cycle_get_32() - start);
+	printk("Requester up, sending to %s:%d, stream_id %08x%08x\n",
+	       CONFIG_NET_CONFIG_PEER_IPV4_ADDR, PROTOCOL_UDP_PORT,
+	       (uint32_t)(stream.stream_id >> 32), (uint32_t)stream.stream_id);
 
-		if (ret == 0) {
-			gpio_pin_toggle_dt(&ok_led);
-			gpio_pin_set_dt(&err_led, 0);
-			printk("ping %u: %u us\n", seq, rtt_us);
-		} else {
-			gpio_pin_set_dt(&err_led, 1);
-			printk("ping %u: %s (%d)\n", seq, ret == -EAGAIN ? "timeout" : "error", ret);
-		}
+	/*
+	 * Task 4: one Write Request per second, logged by the Responder. Responses,
+	 * matching and the status LEDs follow with the Responder side in task 5.
+	 */
+	for (;;) {
+		int ret = send_write_request(sock, &responder);
 
+		gpio_pin_set_dt(&err_led, ret < 0);
 		k_msleep(1000);
 	}
 }

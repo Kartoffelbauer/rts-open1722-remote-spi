@@ -31,4 +31,12 @@ To view the data transfer (over ethernet) between the board and the pc (therefor
 3. Start Wireshark (install it if not already installed)
 4. Go to Ethernet and filter by `udp.port == 17220`
 
-Once you flash the requester to the board you should see messages coming in. For the responder you will need to send a UDP packet to it first! You can do that via terminal or any other method that suits you. Once you send a message an answer should return.
+Once you flash the requester to the board you should see a GBB Write Request coming in every second.
+
+The responder logs every GBB Request it receives and drops any other datagram, so a test packet has to be a GBB datagram. For example, this sends a Write Request with the payload `aa bb cc` to Byte Bus 2 (needs Python):
+
+```bash
+python -c "import socket; socket.socket(socket.AF_INET, socket.SOCK_DGRAM).sendto(bytes.fromhex('01020304 82001405 0011223344550001 1a054002 0000000000000000 00108000 aabbcc00'), ('192.168.1.11', 17220))"
+```
+
+The responder's log then shows `Write Request 16: Byte Bus 2` and `3 payload bytes: aa bb cc`.

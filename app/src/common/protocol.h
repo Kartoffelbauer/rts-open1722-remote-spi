@@ -9,6 +9,9 @@
 /* How long the Requester waits for a response before the transaction fails */
 #define PROTOCOL_TIMEOUT_MS 100
 
+/* unique_id in the low 16 bits of each board's stream_id (IEEE 1722-2025 4.6) */
+#define PROTOCOL_STREAM_UNIQUE_ID 1
+
 /* Byte Buses on the Responder, see docs/architecture.md */
 enum byte_bus_id {
 	BYTE_BUS_SENSOR = 1,	/* BME68x */

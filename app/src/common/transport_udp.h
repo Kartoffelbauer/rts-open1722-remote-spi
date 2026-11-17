@@ -21,3 +21,10 @@ int transport_send(int sock, const struct net_sockaddr_in *to, const void *buf, 
  * or another negative errno.
  */
 int transport_recv(int sock, struct net_sockaddr_in *from, void *buf, size_t len);
+
+/*
+ * Returns the stream_id for this board's datagrams: the MAC address of the default
+ * interface followed by unique_id (IEEE 1722-2025 4.6). Without a MAC address the
+ * upper 48 bits are 0.
+ */
+uint64_t transport_stream_id(uint16_t unique_id);

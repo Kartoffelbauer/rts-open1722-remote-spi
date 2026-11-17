@@ -1,7 +1,11 @@
 #include <errno.h>
+#include <zephyr/net/net_if.h>
 #include <zephyr/net/socket.h>
 
 #include "transport_udp.h"
+
+/* Length of an EUI-48 MAC address */
+#define MAC_LEN 6
 
 int transport_addr(struct net_sockaddr_in *addr, const char *ip, uint16_t port)
 {
@@ -69,4 +73,19 @@ int transport_recv(int sock, struct net_sockaddr_in *from, void *buf, size_t len
 	}
 
 	return (int)n;
+}
+
+uint64_t transport_stream_id(uint16_t unique_id)
+{
+	struct net_if *iface = net_if_get_default();
+	struct net_linkaddr *mac = iface != NULL ? net_if_get_link_addr(iface) : NULL;
+	uint64_t id = 0;
+
+	if (mac != NULL && mac->len == MAC_LEN) {
+		for (int i = 0; i < MAC_LEN; i++) {
+			id = id << 8 | mac->addr[i];
+		}
+	}
+
+	return id << 16 | unique_id;
 }
