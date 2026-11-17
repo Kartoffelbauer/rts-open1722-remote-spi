@@ -18,7 +18,7 @@ static const struct gpio_dt_spec err_led = GPIO_DT_SPEC_GET(DT_ALIAS(spi_err_led
 static uint8_t buf[GBB_DATAGRAM_LEN(GBB_MAX_PAYLOAD)];
 
 typedef struct __attribute__((packed)) {
-    //Avtp_Udp_t udp;
+    Avtp_Udp_t udp;
     Avtp_NtscfV0_t ntscf;
     Avtp_Gbb_t gbb;
 	uint8_t gbb_payload[8];
@@ -30,19 +30,20 @@ static uint8_t transaction_num = 0;
 
 static size_t create_package() 
 {
-	//Avtp_Udp_Init(&pdu.udp);
+	Avtp_Udp_Init(&pdu.udp);
 	
 	Avtp_Ntscf_Init((Avtp_Ntscf_t *)&pdu.ntscf, 0);
+	printk("Subtype: %i", (int)Avtp_CommonHeader_GetSubtype((const Avtp_CommonHeader_t *)&pdu));
     Avtp_Ntscf_SetSequenceNum((Avtp_Ntscf_t *)&pdu.ntscf, 123);
     Avtp_Ntscf_SetStreamId((Avtp_Ntscf_t *)&pdu.ntscf, 0xAABBCCDDEEFF);
-	
+
 	// Create GBB message with the specified parameters
 	Avtp_Gbb_CreateAcfMessage(
 		&pdu.gbb, BYTE_BUS_SENSOR, 
 		false, transaction_num, 
 		payload, sizeof(payload)
 	);
-	
+
 	Avtp_Ntscf_SetNtscfDataLength_V0(
 		&pdu.ntscf,
 		AVTP_GBB_HEADER_LEN + sizeof(payload)
