@@ -19,20 +19,20 @@ static uint8_t buf[GBB_DATAGRAM_LEN(GBB_MAX_PAYLOAD)];
 
 typedef struct __attribute__((packed)) {
     //Avtp_Udp_t udp;
-    Avtp_NtscfV1_t ntscf;
+    Avtp_NtscfV0_t ntscf;
     Avtp_Gbb_t gbb;
 	uint8_t gbb_payload[8];
 } My1722Pdu_t;
 
 static My1722Pdu_t pdu;
-static uint8_t payload[8] = { 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88 };
+static uint8_t payload[] = { 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88 };
 static uint8_t transaction_num = 0;
 
 static size_t create_package() 
 {
 	//Avtp_Udp_Init(&pdu.udp);
 	
-	Avtp_Ntscf_Init((Avtp_Ntscf_t *)&pdu.ntscf, 1);
+	Avtp_Ntscf_Init((Avtp_Ntscf_t *)&pdu.ntscf, 0);
     Avtp_Ntscf_SetSequenceNum((Avtp_Ntscf_t *)&pdu.ntscf, 123);
     Avtp_Ntscf_SetStreamId((Avtp_Ntscf_t *)&pdu.ntscf, 0xAABBCCDDEEFF);
 	
@@ -40,12 +40,12 @@ static size_t create_package()
 	Avtp_Gbb_CreateAcfMessage(
 		&pdu.gbb, BYTE_BUS_SENSOR, 
 		false, transaction_num, 
-		payload, 8
+		payload, sizeof(payload)
 	);
 	
-	Avtp_Ntscf_SetNtscfDataLength_V1(
+	Avtp_Ntscf_SetNtscfDataLength_V0(
 		&pdu.ntscf,
-		AVTP_GBB_HEADER_LEN + 8
+		AVTP_GBB_HEADER_LEN + sizeof(payload)
 	);
 	
 	return sizeof(pdu);
