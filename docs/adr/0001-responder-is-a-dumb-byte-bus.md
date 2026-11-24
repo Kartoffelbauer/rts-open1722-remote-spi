@@ -8,5 +8,5 @@ The Responder only executes raw byte transfers from GBB Requests on the Byte Bus
 
 ## Consequences
 
-- The Requester needs its own BME68x driver (register reads, calibration data, compensation) and its own SHARP display driver (framebuffer, font rendering, line writes, VCOM inversion). It can't reuse Zephyr's drivers because those talk to a local bus.
+- The Requester runs Zephyr's `bme680` and `ls0xx` drivers on the GBB SPI Controller, which sends their SPI transfers to the Responder ([ADR 0004](0004-requester-runs-zephyr-drivers-on-a-gbb-spi-controller.md)).
 - The Responder's devicetree must not bind the `bme680` / `ls0xx` drivers to these Peripherals. They are reached through raw `spi_transceive` with per-Byte-Bus `spi_config`.

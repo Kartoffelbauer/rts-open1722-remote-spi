@@ -4,7 +4,7 @@
 
 The project switched from an SSD1306 OLED and a BME280 to an Adafruit SHARP Memory Display 1.3" (LS013B7DH05) and a BME68x, because that is the hardware we have. The SHARP display has no D/C line and no reset line: commands and pixel data share one SPI stream, told apart by a mode byte at the start of each transfer. So the display is reached through a single **Display Bus**, and the reason for ADR 0002 is gone.
 
-The panel needs its VCOM polarity inverted regularly. The breakout can do that through an EXTCOMIN pin, or the M1 bit of the mode byte can do it over SPI. We use the SPI variant, driven by the Requester: every Write Request on the Display Bus flips the VCOM bit, and the Requester sends at least one per second (a 2-byte VCOM-only transfer if nothing on screen changed).
+The panel needs its VCOM polarity inverted regularly. The breakout can do that through an EXTCOMIN pin, or the M1 bit of the mode byte can do it over SPI. We use the SPI variant, driven by the Requester. Zephyr's `ls0xx` driver on the Requester (`serial-vcom-inversion`) flips the VCOM bit in every command it sends, and its VCOM thread sends a 2-byte command every second ([ADR 0004](0004-requester-runs-zephyr-drivers-on-a-gbb-spi-controller.md)).
 
 ## Considered Options
 

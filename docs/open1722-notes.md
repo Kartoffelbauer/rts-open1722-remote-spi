@@ -5,7 +5,7 @@ Findings about [Open1722](https://github.com/COVESA/Open1722) that affect this p
 ## GBB support in Open1722
 
 - GBB lives entirely in the header [`include/avtp/acf/Gbb.h`](https://github.com/COVESA/Open1722/blob/main/include/avtp/acf/Gbb.h). It has a unit test (`unit/test-gbb.c`) but **no example app**.
-- The abbreviated version of GBB is called **ABB** (Abbreviated Byte Bus) (§9.4.15). It can be found in [`include/avtp/acf/Abb.h`](https://github.com/COVESA/Open1722/blob/main/include/avtp/acf/Abb.h). The Responder only parses the full format, which is fine as long as the Requester is the only Talker.
+- The abbreviated version of GBB is called **ABB** (Abbreviated Byte Bus) (§9.4.15). It can be found in [`include/avtp/acf/Abb.h`](https://github.com/COVESA/Open1722/blob/main/include/avtp/acf/Abb.h). Both boards only parse the full format, which is fine because each one only receives messages from the other.
 - Open1722 is **not a Zephyr module**. Its only Zephyr app (`examples/acf-can/zephyr`) is built from inside the Open1722 repo.
 
 ## Fixed: `Avtp_Gbb_GetPayloadLength()` truncated to 8 bits
@@ -25,4 +25,4 @@ Up to `v0.9.7`, the getter returned `uint8_t`, so a received payload of 256 byte
 | `cs` | **Conditional start** for chains of GBB messages in one AVTPDU (not chip select) |
 | `hs` | Hold stop: I2C only, always 0 for SPI (Annex O) |
 
-**SPI read (Annex O → Annex M, Figure M.7):** a GBB read request carries the bytes to clock out first (instruction / register address) in its payload, and `read_size` gives the number of bytes to read afterwards, all in one bus transaction. The read response contains only the bytes read. The "don't care" bytes on either line aren't transferred.
+**SPI read (Annex O → Annex M, Figures M.7 and M.8):** a GBB read request carries the bytes to clock out first (instruction / register address) in its payload, and `read_size` gives the number of bytes to read afterwards, all in one bus transaction. The read response contains only the bytes read. The "don't care" bytes on either line aren't transferred.

@@ -49,6 +49,10 @@ The Byte Bus that reaches the BME68x.
 The Byte Bus that reaches the SHARP Memory Display. It carries both display commands and pixel data.
 _Avoid_: OLED bus, pixel bus, framebuffer bus
 
+**GBB SPI Controller**:
+The Requester's SPI controller whose transfers take place on the Responder's Byte Buses, so that the Requester's device drivers use the Peripherals as if they were wired to the Requester.
+_Avoid_: remote SPI driver, SPI proxy, virtual SPI
+
 **Failed Transaction**:
 A GBB Request that ended in a GBB Response with the error flag set, or got no matching response in time.
 _Avoid_: lost packet, NACK

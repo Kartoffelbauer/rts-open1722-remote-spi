@@ -8,9 +8,9 @@
 | 3 | **Network test:** Ethernet + static IPs, UDP echo A ↔ B | ✅ |
 | 4a | **Core tests:** ztest suite on `native_sim` for the GBB framing and parsing API in `common/gbb.h` (Write/Read Request build, Response parse, `transaction_num` matching, malformed datagrams) | ✅ |
 | 4 | **GBB message:** implement `common/gbb.c` against the 4a tests, Board A sends a GBB Write Request built with it, Board B parses it and logs the bytes | 🟡 |
-| 5 | **Responder:** Byte Bus table (`byte_bus_id` → `spi_config` incl. CS polarity and bit order), run the SPI transfer, send GBB Response, `err`=1 on failure | ⬜ |
-| 6 | **Milestone 1:** Board A reads the BME68x chip ID (`0x61`) remotely | ⬜ |
-| 7 | **Milestone 2:** Board A polls the BME68x every second and shows it on the remote display, button cycles Display Pages, status LEDs, Link Stats page | ⬜ |
+| 5 | **Responder:** Byte Bus table (`byte_bus_id` → `spi_config` incl. CS polarity and bit order), run the SPI transfer, send GBB Response from an ephemeral port, `err`=1 on failure | ⬜ |
+| 6 | **Milestone 1:** GBB SPI Controller on Board A, Zephyr's `bme680` driver reads the BME68x chip ID (`0x61`) remotely | ⬜ |
+| 7 | **Milestone 2:** Board A polls the BME68x every second through Zephyr's sensor API and shows it on the remote display (`ls0xx` and the character framebuffer, blocks of at most 71 lines), button cycles Display Pages, status LEDs, Link Stats page | ⬜ |
 | 8 | **Finalisation:** docs, demo, cleanup | ⬜ |
 | 9 | **Upstream PR:** fix `Avtp_Gbb_GetPayloadLength()` in Open1722 (see [Open1722 Notes](open1722-notes.md)) | ✅ |
 
@@ -45,7 +45,7 @@ flowchart LR
 
 - **Hardware change:** the project now uses an Adafruit SHARP Memory Display 1.3" (LS013B7DH05) and a BME68x instead of the SSD1306 OLED and the BME280.
 - **Task 2:** standalone examples in [`examples/`](../examples) cover SPI on Board B without network: [`hello_world`](../examples/hello_world) (text on the display), [`air_quality`](../examples/air_quality) (sensor values on the display, two CS lines on SPI1) and [`cookie_clicker`](../examples/cookie_clicker) (demo). They use Zephyr's `ls0xx` and `bme680` drivers.
-- **Task 3:** the Requester pings the Responder once per second over UDP port 17220 and logs the round-trip time; the Responder echoes. LEDs show link OK / error. Testing with one board and a PC is in [Debugging](debugging.md).
+- **Task 3:** the Requester pings the Responder once per second over UDP and logs the round-trip time; the Responder echoes. LEDs show link OK / error. Testing with one board and a PC is in [Debugging](debugging.md).
 - **Task 9:** PR to COVESA/Open1722 is merged.
 
 ## Related
