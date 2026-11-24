@@ -19,7 +19,10 @@
 /* Bytes in front of the GBB payload: Annex J (4) + NTSCF v0 (12) + GBB header (16) */
 #define GBB_HEADERS_LEN 32
 
-/* Largest GBB payload: acf_msg_length is 9 bits of quadlets (2044 bytes) minus the GBB header */
+/*
+ * Largest GBB payload: acf_msg_length is 9 bits of quadlets (2044 bytes) minus the
+ * GBB header. One datagram on the link carries less, see PROTOCOL_MAX_PAYLOAD.
+ */
 #define GBB_MAX_PAYLOAD 2028
 
 /* Datagram length for a payload of len bytes, padded to a whole quadlet */

@@ -14,8 +14,12 @@
 static const struct device *const spi = DEVICE_DT_GET(SPI_NODE);
 static const struct gpio_dt_spec err_led = GPIO_DT_SPEC_GET(DT_ALIAS(spi_err_led), gpios);
 
-/* Large enough for the largest GBB datagram */
-static uint8_t buf[GBB_DATAGRAM_LEN(GBB_MAX_PAYLOAD)];
+/*
+ * One received datagram. Without IPv4 fragmentation no datagram is longer than
+ * PROTOCOL_MAX_DATAGRAM_LEN, so the largest message the GBB format allows
+ * (GBB_MAX_PAYLOAD) can't arrive and needs no room.
+ */
+static uint8_t buf[PROTOCOL_MAX_DATAGRAM_LEN];
 
 static void log_request(const struct gbb_msg *req)
 {
