@@ -1,21 +1,21 @@
 #!/usr/bin/env python3
 """
-Ersatz für 'openocd' im Devcontainer.
+Stand-in for 'openocd' in the dev container.
 
-Docker Desktop (macOS/Windows) kann keine USB-Geräte in den Container
-durchreichen. Deshalb läuft OpenOCD auf dem Host (dort hängt das Board) und
-dieses Skript übersetzt die Aufrufe von 'west flash' / 'west debug' in eine
-GDB-Verbindung zu diesem OpenOCD. Die Firmware wird über die GDB-Verbindung
-übertragen, der Host braucht also keinen Zugriff auf die Build-Dateien.
+Docker Desktop (macOS/Windows) can't pass USB devices into the container.
+So OpenOCD runs on the host, where the board is plugged in, and this script
+turns the calls of 'west flash' / 'west debug' into a GDB connection to that
+OpenOCD. The firmware is transferred over the GDB connection, so the host
+needs no access to the build files.
 
-Host-Seite (einmal starten, Board per USB anschließen):
-    openocd -f board/st_nucleo_f4.cfg
+Host side: start OpenOCD once, with the board plugged in, as described in
+docs/getting-started.md (step 2).
 
-Der Host wird automatisch gesucht, der erste erreichbare gewinnt:
-  1. OPENOCD_REMOTE_HOST, falls gesetzt (dann nur dieser)
-  2. IP aus OPENOCD_REMOTE_HOST_FILE (unter WSL vom initializeCommand
-     geschrieben: Windows-Host-IP aus 'ip route show default')
-  3. host.docker.internal (Docker Desktop; unter Linux per
+The host is found automatically, the first reachable one wins:
+  1. OPENOCD_REMOTE_HOST, if set (then only this one)
+  2. The IP in OPENOCD_REMOTE_HOST_FILE (written by initializeCommand under
+     WSL: the Windows host IP from 'ip route show default')
+  3. host.docker.internal (Docker Desktop; on Linux through
      --add-host=host.docker.internal:host-gateway -> 172.17.0.1)
 """
 
@@ -28,17 +28,16 @@ import sys
 import tempfile
 import threading
 
-HOST = None  # wird von check_host() gesetzt
+HOST = None  # set by check_host()
 GDB_PORT = int(os.environ.get("OPENOCD_REMOTE_GDB_PORT", "3333"))
 
 
 def host_hint(hosts):
     tried = ", ".join(f"{h}:{GDB_PORT}" for h in hosts)
     return f"""
-Kein OpenOCD auf dem Host erreichbar ({tried}).
-Board per USB am Rechner anschließen und auf dem Host (nicht im Container) starten:
-
-    openocd -f board/st_nucleo_f4.cfg
+No OpenOCD reachable on the host ({tried}).
+Plug the board into the PC over USB and start OpenOCD on the host (not in the
+container) as described in docs/getting-started.md, step 2.
 """
 
 
@@ -62,14 +61,14 @@ def die(msg):
 
 
 def parse_args(argv):
-    """Liefert die -c Kommandos nach 'init' und den gewünschten GDB-Port."""
+    """Returns the -c commands after 'init' and the requested GDB port."""
     cmds, gdb_port, after_init = [], GDB_PORT, False
     it = iter(argv)
     for arg in it:
         if arg in ("-s", "-f", "-d", "-l", "--search", "--file", "--log_output"):
             next(it, None)
         elif arg in ("-c", "--command") or arg.startswith("-c"):
-            # Der Runner übergibt teils '-c init' als ein einziges Argument
+            # The runner sometimes passes '-c init' as a single argument
             cmd = (next(it, "") if arg in ("-c", "--command") else arg[2:]).strip()
             m = re.fullmatch(r"gdb_port\s+(\d+)", cmd)
             if m:
@@ -97,12 +96,12 @@ def check_host():
 def find_gdb():
     gdbs = sorted(glob.glob("/workdir/zephyr-sdk-*/gnu/arm-zephyr-eabi/bin/arm-zephyr-eabi-gdb"))
     if not gdbs:
-        die("arm-zephyr-eabi-gdb im Zephyr SDK nicht gefunden")
+        die("arm-zephyr-eabi-gdb not found in the Zephyr SDK")
     return gdbs[-1]
 
 
 def elf_for(image):
-    """GDB lädt am zuverlässigsten die ELF-Datei neben .hex/.bin."""
+    """GDB loads the ELF file next to the .hex/.bin most reliably."""
     elf = os.path.splitext(image)[0] + ".elf"
     return elf if os.path.exists(elf) else image
 
@@ -123,13 +122,13 @@ def flash(cmds):
             gdb_cmds.append(f"monitor {cmd}")
     gdb_cmds.append("disconnect")
 
-    # Als Skript statt -ex: bricht beim ersten Fehler ab und liefert Exit-Code != 0
+    # As a script instead of -ex: stops at the first error and exits with a non-zero code
     with tempfile.NamedTemporaryFile("w", suffix=".gdb") as script:
         script.write("\n".join(gdb_cmds) + "\n")
         script.flush()
         result = subprocess.run([find_gdb(), "-q", "-batch", "-nx", "-x", script.name])
     if result.returncode != 0:
-        die("Flashen fehlgeschlagen")
+        die("flashing failed")
 
 
 def pipe(src, dst):
@@ -147,7 +146,7 @@ def pipe(src, dst):
 
 
 def serve(local_port):
-    """'west debug'/'debugserver': lokalen GDB-Port zum Host-OpenOCD weiterleiten."""
+    """'west debug'/'debugserver': forwards a local GDB port to OpenOCD on the host."""
     srv = socket.create_server(("127.0.0.1", local_port))
     print(f"openocd-remote: localhost:{local_port} -> {HOST}:{GDB_PORT}", file=sys.stderr)
     while True:
@@ -166,7 +165,7 @@ def serve(local_port):
 def main():
     argv = sys.argv[1:]
     if "--version" in argv or "-v" in argv:
-        # Der Zephyr-Runner liest die Version, um Thread-Awareness zu prüfen
+        # The Zephyr runner reads the version to check for thread awareness
         print("Open On-Chip Debugger 0.12.0 (openocd-remote wrapper)")
         return
 

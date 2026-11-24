@@ -32,7 +32,7 @@ Run the following code in the "/" folder by using `cd /`
 
 This should set the line breaks correctly.
 
-### `Kein OpenOCD auf dem Host erreichbar`
+### `No OpenOCD reachable on the host`
 
 The container can't reach OpenOCD on the host.
 

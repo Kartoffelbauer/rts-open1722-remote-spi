@@ -2,8 +2,8 @@ FROM mcr.microsoft.com/devcontainers/base:ubuntu-24.04
 
 ARG DEBIAN_FRONTEND=noninteractive
 
-# Host-Abhängigkeiten laut Zephyr Getting Started Guide (Ubuntu 24.04).
-# gcc-multilib/g++-multilib gibt es nicht auf arm64 (Apple Silicon) -> nur auf amd64.
+# Host dependencies from the Zephyr Getting Started Guide (Ubuntu 24.04).
+# gcc-multilib/g++-multilib don't exist on arm64 (Apple Silicon), so amd64 only.
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
        git cmake ninja-build gperf ccache dfu-util device-tree-compiler wget \
@@ -14,10 +14,10 @@ RUN apt-get update \
        fi \
     && rm -rf /var/lib/apt/lists/*
 
-# Mountpunkt für das Docker-Volume mit West-Workspace, venv und SDK.
-# Gehört vscode, damit ein frisches Volume diese Rechte übernimmt.
+# Mount point of the Docker volume with the west workspace, venv and SDK.
+# Owned by vscode, so a fresh volume takes over these permissions.
 RUN mkdir -p /workdir && chown vscode:vscode /workdir
 
-# 'openocd'-Ersatz: leitet west flash/debug an OpenOCD auf dem Host weiter,
-# weil Docker Desktop kein USB in den Container durchreicht.
+# Stand-in for 'openocd': forwards west flash/debug to OpenOCD on the host,
+# because Docker Desktop doesn't pass USB devices into the container.
 COPY --chmod=755 openocd-remote /usr/local/bin/openocd-remote
